@@ -178,7 +178,8 @@ function loginAdmin() {
     .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
     .then(function(result) {
         if (result.ok) {
-            localStorage.setItem("userRole", role);
+            var storedRole = (role === "hospital") ? "receiver" : role;
+            localStorage.setItem("userRole", storedRole);
             localStorage.setItem("userEmail", email);
             if (role === "hospital") {
                 window.location.href = "receiver-dashboard.html";
@@ -193,22 +194,60 @@ function loginAdmin() {
 }
 
 function sendOtp() {
-    var phone = document.getElementById("donorPhone").value;
+    var phone = document.getElementById("donorPhone").value.trim();
     if (!phone) { alert("Please enter a phone number."); return; }
-    alert("OTP sent to " + phone + " (placeholder)");
 
-    // Enable the OTP input field after OTP is sent
-    var otpInput = document.getElementById("donorOtp");
-    otpInput.disabled = false;
-    otpInput.placeholder = "Enter OTP";
-    otpInput.focus();
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    fetch(API_BASE + "/api/auth/request-mobile-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile_number: phone })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (result.ok) {
+            alert("OTP sent to " + phone);
+            var otpInput = document.getElementById("donorOtp");
+            otpInput.disabled = false;
+            otpInput.placeholder = "Enter OTP";
+            otpInput.focus();
+        } else {
+            alert(result.data.message || "Failed to send OTP.");
+        }
+    })
+    .catch(function() { alert("Server error. Please try again."); })
+    .finally(function() {
+        btn.disabled = false;
+        btn.textContent = "Send OTP";
+    });
 }
 
 function loginDonor() {
-    var otp = document.getElementById("donorOtp").value;
+    var phone = document.getElementById("donorPhone").value.trim();
+    var otp = document.getElementById("donorOtp").value.trim();
+
+    if (!phone) { alert("Please enter your phone number."); return; }
     if (!otp) { alert("Please enter the OTP."); return; }
-    localStorage.setItem("userRole", "donor");
-    window.location.href = "donor-dashboard.html";
+
+    fetch(API_BASE + "/api/auth/verify-mobile-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile_number: phone, otp: otp })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (result.ok) {
+            localStorage.setItem("userRole", "donor");
+            localStorage.setItem("userPhone", phone);
+            window.location.href = "donor-dashboard.html";
+        } else {
+            alert(result.data.message || "OTP verification failed.");
+        }
+    })
+    .catch(function() { alert("Server error. Please try again."); });
 }
 </script>
 

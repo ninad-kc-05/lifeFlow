@@ -1,44 +1,97 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-import requests
 
-from users.models import Admin, Hospital
-from .utils import generate_email_otp, send_otp_email
-from .models import EmailOTP
+from users.models import Admin, Hospital, Donor
+from .utils import generate_email_otp, send_otp_email, generate_mobile_otp, send_otp_sms
+from .models import EmailOTP, OTPVerification
 
 
 # -------------------------
-# Existing SMS API (for Donor mobile OTP)
+# Mobile OTP APIs (for Donor)
 # -------------------------
+
 @csrf_exempt
-def sms_api(request):
-    if request.method == "POST":
+def request_mobile_otp(request):
+    """
+    POST /api/auth/request-mobile-otp/
+    Request body: { "mobile_number": "..." }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+
+    try:
         data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
-        phone = data.get("to")
-        message = data.get("message")
+    mobile_number = data.get('mobile_number', '').strip()
 
-        print("Sending to phone gateway...")
+    if not mobile_number:
+        return JsonResponse({'status': 'error', 'message': 'mobile_number is required'}, status=400)
 
-        gateway_url = "http://10.142.117.231:8082/"
+    # Verify donor exists
+    if not Donor.objects.filter(mobile_number=mobile_number).exists():
+        print(f"[DEBUG] Donor not found for {mobile_number}")
+        return JsonResponse({'status': 'error', 'message': 'Donor with this mobile number does not exist'}, status=404)
 
-        payload = {
-            "to": phone,
-            "message": message
-        }
+    print(f"[DEBUG] Donor found. Generating OTP...")
 
-        response = requests.post(gateway_url, json=payload)
+    # Generate OTP and save to DB
+    otp = generate_mobile_otp(mobile_number)
 
-        print("Phone response:", response.text)
+    # Try to send via SMS gateway
+    sms_sent = send_otp_sms(mobile_number, otp)
 
+    if not sms_sent:
+        print(f"[DEBUG] SMS failed but OTP {otp} is saved in DB for {mobile_number}")
         return JsonResponse({
-            "status": "Sent to phone",
-            "phone_response": response.text
+            'status': 'success',
+            'message': 'OTP generated but SMS delivery failed. Check server logs for OTP.',
+            'sms_sent': False
         })
 
-    return JsonResponse({"message": "Server running"})
+    print(f"[DEBUG] OTP sent successfully to {mobile_number}")
+    return JsonResponse({'status': 'success', 'message': 'OTP sent successfully', 'sms_sent': True})
+
+
+@csrf_exempt
+def verify_mobile_otp(request):
+    """
+    POST /api/auth/verify-mobile-otp/
+    Request body: { "mobile_number": "...", "otp": "123456" }
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+
+    mobile_number = data.get('mobile_number', '').strip()
+    otp = data.get('otp', '').strip()
+
+    if not mobile_number or not otp:
+        return JsonResponse({'status': 'error', 'message': 'mobile_number and otp are required'}, status=400)
+
+    # Fetch latest OTP record for this number
+    try:
+        otp_record = OTPVerification.objects.filter(mobile_number=mobile_number).latest('created_at')
+    except OTPVerification.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Invalid or expired OTP'}, status=400)
+
+    if otp_record.is_expired():
+        return JsonResponse({'status': 'error', 'message': 'Invalid or expired OTP'}, status=400)
+
+    if otp_record.otp_code != otp:
+        return JsonResponse({'status': 'error', 'message': 'Invalid or expired OTP'}, status=400)
+
+    # Mark as verified
+    otp_record.is_verified = True
+    otp_record.save()
+
+    return JsonResponse({'status': 'success', 'message': 'OTP verified successfully'})
 
 
 # -------------------------

@@ -53,6 +53,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5501',
     'http://localhost:5501',
+    'http://127.0.0.1:5500',
 ]
 
 
@@ -133,3 +134,9 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+
+# SMS Gateway Configuration
+SMS_GATEWAY_URL = os.getenv('SMS_GATEWAY_URL')
+SMS_GATEWAY_TOKEN = os.getenv('SMS_GATEWAY_TOKEN')
+SMS_SENDER_NUMBER = os.getenv('SMS_SENDER_NUMBER')

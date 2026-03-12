@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeFlow – Admin Users</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+      <img src="logo.jpeg" alt="LifeFlow" />
+    </div>
+    <div class="nav-links">
+      <button onclick="goAdminDashboard()">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container card-panel card-wide">
+    <h2 class="section-title">System <span>Users</span> (Dummy)</h2>
+    <p class="text-muted mt-sm">Static sample data to show how an admin user list could look.</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+      <thead>
+        <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+          <th style="padding:0.5rem 0.25rem;">Name</th>
+          <th style="padding:0.5rem 0.25rem;">Role</th>
+          <th style="padding:0.5rem 0.25rem;">Email</th>
+          <th style="padding:0.5rem 0.25rem;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">Rohan S.</td>
+          <td style="padding:0.45rem 0.25rem;">Donor</td>
+          <td style="padding:0.45rem 0.25rem;">rohan@example.com</td>
+          <td style="padding:0.45rem 0.25rem;">Active</td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
+          <td style="padding:0.45rem 0.25rem;">Receiver</td>
+          <td style="padding:0.45rem 0.25rem;">info@citycare.in</td>
+          <td style="padding:0.45rem 0.25rem;">Verified</td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">Admin User</td>
+          <td style="padding:0.45rem 0.25rem;">Admin</td>
+          <td style="padding:0.45rem 0.25rem;">admin@lifeflow.app</td>
+          <td style="padding:0.45rem 0.25rem;">Active</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+  </div>
+
+  <script>
+    function goHome() { window.location.href = "index.html"; }
+    function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
+  </script>
+</body>
+</html>

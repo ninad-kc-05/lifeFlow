@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Donor Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+            <img src="logo.jpeg">
+        </div>
+
+        <div class="nav-links">
+            <button onclick="goHome()">Home</button>
+            <div style="position:relative; display:inline-block;">
+                <button class="profile-btn" onclick="toggleProfilePopup(event)">&#9881; Profile</button>
+                <div class="profile-popup" id="profilePopup">
+                    <a href="donor-profile.html">Rohan S. (View Profile)</a>
+                    <div class="popup-divider"></div>
+                    <a href="status.html">Status Update</a>
+                    <div class="popup-divider"></div>
+                    <button onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="container">
+    <h2>Welcome, Donor 👋</h2>
+
+    <!-- Donor summary -->
+    <div class="cards mt-sm">
+        <div class="card">
+            <h3>Total Donations</h3>
+            <p class="text-muted">3 lifetime donations</p>
+        </div>
+        <div class="card">
+            <h3>Last Donation</h3>
+            <p class="text-muted">45 days ago</p>
+        </div>
+        <div class="card">
+            <h3>Next Eligible Date</h3>
+            <p class="text-muted">in 15 days</p>
+        </div>
+    </div>
+
+    <!-- Main actions -->
+    <div class="cards mt-lg">
+        <div class="card">
+            <h3>Donate Blood</h3>
+            <p>Complete a survey and schedule a blood donation.</p>
+            <button class="btn btn-primary" onclick="donate()">Donate Now</button>
+        </div>
+
+        <div class="card">
+            <h3>My Donations</h3>
+            <p>View your past donation history.</p>
+            <button class="btn btn-primary" onclick="viewHistory()">View History</button>
+        </div>
+
+        <div class="card">
+            <h3>Matched Requests</h3>
+            <p>View blood requests that match your profile.</p>
+            <button class="btn btn-primary" onclick="viewMatchedRequests()">View Requests</button>
+        </div>
+    </div>
+
+    <!-- Request Match Notification -->
+    <div class="card-panel mt-lg" id="requestMatchSection">
+        <h3>🔔 Request Match Found</h3>
+        <p class="text-muted mt-sm">A hospital has requested blood matching your profile (O+). You may be eligible to donate.</p>
+        <div style="margin-top:0.75rem;">
+            <button class="btn btn-primary btn-sm" onclick="viewMatchedRequests()">View Request Details</button>
+        </div>
+
+        <!-- Donor Instruction Dropdown -->
+        <details class="instruction-dropdown">
+            <summary>Donor Instructions</summary>
+            <div class="dropdown-content">
+                <ul style="list-style:none; padding:0;">
+                    <li>• Drink plenty of water before donating.</li>
+                    <li>• Eat a healthy meal at least 2 hours prior.</li>
+                    <li>• Bring a valid photo ID to the donation center.</li>
+                    <li>• Avoid heavy exercise for 24 hours after donating.</li>
+                    <li>• Inform the center if you feel unwell at any point.</li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function logout() { localStorage.clear(); window.location.href = "login.html"; }
+function donate() { window.location.href = "survey_form.html"; }
+function viewHistory() { window.location.href = "donor-history.html"; }
+function viewMatchedRequests() { window.location.href = "Donor_gets_request.html"; }
+
+function toggleProfilePopup(e) {
+    e.stopPropagation();
+    document.getElementById('profilePopup').classList.toggle('show');
+}
+document.addEventListener('click', function() {
+    document.getElementById('profilePopup').classList.remove('show');
+});
+
+if (localStorage.getItem("userRole") !== "donor") {
+    alert("Unauthorized access!");
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

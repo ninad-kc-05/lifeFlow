@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Admin / Hospital Registration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goHome()">Home</button>
+        <button onclick="goLogin()">Login</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="text-center">Admin / Hospital Registration</h2>
+    <p class="text-muted mt-sm text-center">Select a role and fill in the details below.</p>
+
+    <label>Select Role *</label>
+    <select id="regRole" onchange="toggleRoleForm()">
+        <option value="">-- Select --</option>
+        <option value="hospital">Hospital / Receiver</option>
+        <option value="admin">Admin</option>
+    </select>
+
+    <!-- Hospital Registration Form -->
+    <div id="hospitalForm" style="display:none;">
+        <form onsubmit="return false;">
+            <label>Hospital Name *</label>
+            <input type="text" id="hospitalName" placeholder="Hospital / Blood Bank Name" required>
+
+            <label>License Number *</label>
+            <input type="text" id="licenseNumber" placeholder="License Number" required>
+
+            <label>Contact Person Name *</label>
+            <input type="text" id="contactPersonName" placeholder="Contact Person Name" required>
+
+            <label>Mobile Number *</label>
+            <input type="tel" id="hospitalMobile" placeholder="+91-XXXXXXXXXX" required>
+
+            <label>Email *</label>
+            <input type="email" id="hospitalEmail" placeholder="Email" required>
+
+            <label>Address Line *</label>
+            <input type="text" id="hospitalAddress" placeholder="Street / Area" required>
+
+            <label>City *</label>
+            <input type="text" id="hospitalCity" placeholder="City" required>
+
+            <label>State *</label>
+            <input type="text" id="hospitalState" placeholder="State" required>
+
+            <label>Pincode *</label>
+            <input type="text" id="hospitalPincode" placeholder="Pincode" maxlength="10" required>
+
+            <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="handleHospitalRegister()">Register Hospital</button>
+        </form>
+    </div>
+
+    <!-- Admin Registration Form -->
+    <div id="adminForm" style="display:none;">
+        <form onsubmit="return false;">
+            <label>Full Name *</label>
+            <input type="text" id="adminFullName" placeholder="Full Name" required>
+
+            <label>Mobile Number *</label>
+            <input type="tel" id="adminMobile" placeholder="+91-XXXXXXXXXX" required>
+
+            <label>Email *</label>
+            <input type="email" id="adminEmail" placeholder="Email" required>
+
+            <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="handleAdminRegister()">Register Admin</button>
+        </form>
+    </div>
+
+    <p class="text-muted mt-sm text-center" style="font-size:0.82rem;">
+        Are you a donor? <a href="donor_register.html" style="color:var(--color-primary); text-decoration:none;">Register as Donor</a>
+    </p>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goLogin() { window.location.href = "login.html"; }
+
+function toggleRoleForm() {
+    const role = document.getElementById("regRole").value;
+    document.getElementById("hospitalForm").style.display = role === "hospital" ? "block" : "none";
+    document.getElementById("adminForm").style.display = role === "admin" ? "block" : "none";
+}
+
+async function handleHospitalRegister() {
+    const fields = {
+        hospital_name: document.getElementById("hospitalName").value.trim(),
+        license_number: document.getElementById("licenseNumber").value.trim(),
+        contact_person_name: document.getElementById("contactPersonName").value.trim(),
+        mobile_number: document.getElementById("hospitalMobile").value.trim(),
+        email: document.getElementById("hospitalEmail").value.trim(),
+        address_line: document.getElementById("hospitalAddress").value.trim(),
+        city: document.getElementById("hospitalCity").value.trim(),
+        state: document.getElementById("hospitalState").value.trim(),
+        pincode: document.getElementById("hospitalPincode").value.trim(),
+    };
+
+    for (const [key, value] of Object.entries(fields)) {
+        if (!value) {
+            alert("Please fill all required fields.");
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/api/register/hospital/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields),
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            alert(data.message);
+            window.location.href = "login.html?role=hospital";
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert("Network error. Please try again.");
+    }
+}
+
+async function handleAdminRegister() {
+    const fields = {
+        full_name: document.getElementById("adminFullName").value.trim(),
+        mobile_number: document.getElementById("adminMobile").value.trim(),
+        email: document.getElementById("adminEmail").value.trim(),
+    };
+
+    for (const [key, value] of Object.entries(fields)) {
+        if (!value) {
+            alert("Please fill all required fields.");
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/api/register/admin/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields),
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            alert(data.message);
+            window.location.href = "login.html?role=admin";
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert("Network error. Please try again.");
+    }
+}
+
+// Pre-select role from URL param
+(function preselectRole() {
+    const params = new URLSearchParams(window.location.search);
+    const roleFromUrl = params.get("role");
+    if (!roleFromUrl) return;
+    const roleMap = { "receiver": "hospital", "hospital": "hospital", "admin": "admin" };
+    const mapped = roleMap[roleFromUrl];
+    if (mapped) {
+        document.getElementById("regRole").value = mapped;
+        toggleRoleForm();
+    }
+})();
+</script>
+
+</body>
+</html>

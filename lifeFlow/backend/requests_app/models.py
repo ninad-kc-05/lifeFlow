@@ -1,0 +1,111 @@
+from django.db import models
+
+class BloodRequest(models.Model):
+
+    URGENCY_CHOICES = [
+        ('normal', 'Normal'),
+        ('urgent', 'Urgent'),
+        ('emergency', 'Emergency'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    hospital = models.ForeignKey(
+        'users.Hospital',
+        on_delete=models.CASCADE,
+        related_name='blood_requests'
+    )
+
+    patient_name = models.CharField(max_length=100)
+    patient_age = models.PositiveIntegerField()
+
+    blood_group = models.CharField(max_length=5)
+    units_required = models.PositiveIntegerField()
+
+    urgency_level = models.CharField(
+        max_length=10,
+        choices=URGENCY_CHOICES,
+        default='normal'
+    )
+
+    required_by_date = models.DateField()
+
+    hospital_contact_number = models.CharField(max_length=15)
+
+    address_line = models.TextField()
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.patient_name} - {self.blood_group}"
+
+from django.db import models
+
+
+class DonorResponse(models.Model):
+
+    RESPONSE_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+
+    donor = models.ForeignKey(
+        'users.Donor',
+        on_delete=models.CASCADE,
+        related_name='responses'
+    )
+
+    blood_request = models.ForeignKey(
+        'requests_app.BloodRequest',
+        on_delete=models.CASCADE,
+        related_name='donor_responses'
+    )
+
+    response_status = models.CharField(
+        max_length=20,
+        choices=RESPONSE_STATUS_CHOICES,
+        default='pending'
+    )
+
+    response_message = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    response_date = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        unique_together = ('donor', 'blood_request')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.donor} - {self.blood_request} ({self.response_status})"

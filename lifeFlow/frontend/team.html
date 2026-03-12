@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Team</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg">
+    </div>
+    <div class="nav-links">
+        <button onclick="goHome()">Home</button>
+        <button onclick="goAbout()">About</button>
+        <button onclick="goContact()">Contact</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="text-center">Our Team</h2>
+    <p class="text-center text-muted mt-sm">A small team working on design, backend, database, and coordination for LifeFlow.</p>
+
+    <div class="team-grid mt-md">
+        <div class="card">
+            <h3>Ninad Kathe</h3>
+            <p>Frontend Contributor</p>
+            <p class="text-muted">Focus: UI, responsive layouts, and smooth user journeys.</p>
+        </div>
+
+        <div class="card">
+            <h3>Mayuresh Kharat</h3>
+            <p>Backend Developer</p>
+            <p class="text-muted">Focus: APIs, security, and server-side logic.</p>
+        </div>
+
+        <div class="card">
+            <h3>Sairaj Kundgar</h3>
+            <p>Database Designer</p>
+            <p class="text-muted">Focus: data models and efficient queries.</p>
+        </div>
+
+        <div class="card">
+            <h3>Aryan Kudalkar</h3>
+            <p>Project Lead</p>
+            <p class="text-muted">Focus: planning, coordination, and reviews.</p>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goAbout() { window.location.href = "about.html"; }
+function goContact() { window.location.href = "contact.html"; }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Donation Screening</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+    /* ===== Screening Form Styles ===== */
+
+    .screening-card {
+        max-width: 700px;
+        background: var(--color-surface);
+        border-radius: 1.15rem;
+        padding: 2.25rem 2.5rem;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid var(--color-border-subtle);
+    }
+
+    .screening-header-icon {
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-accent), #4caf50);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem; color: #fff;
+    }
+
+    /* --- Sections --- */
+    .s-section { margin-top: 1.75rem; }
+
+    .s-section-title {
+        font-size: 0.82rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--color-primary);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--color-primary-soft);
+        margin-bottom: 1rem;
+    }
+
+    /* --- Field card --- */
+    .field-card {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-md);
+        padding: 1rem 1.15rem;
+        margin-bottom: 0.85rem;
+        transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+    }
+    .field-card:hover { border-color: rgba(26,138,158,0.3); }
+    .field-card.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239,68,68,0.12);
+    }
+
+    .field-label {
+        display: block; font-size: 0.88rem; font-weight: 600;
+        color: var(--color-text-main); margin: 0 0 0.5rem;
+    }
+
+    .field-card .inline-error {
+        display: none; font-size: 0.76rem;
+        color: #ef4444; margin-top: 0.35rem; font-weight: 500;
+    }
+    .field-card.error .inline-error { display: block; }
+
+    /* --- Inputs --- */
+    .s-input {
+        width: 100%; padding: 0.55rem 0.75rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border-subtle);
+        background: var(--color-surface);
+        font-size: 0.88rem; color: var(--color-text-main);
+        font-family: inherit;
+        transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+    }
+    .s-input:focus {
+        outline: none; border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(26,138,158,0.2);
+    }
+    .s-input[readonly] {
+        background: var(--color-bg); color: var(--color-text-muted);
+        cursor: default;
+    }
+
+    .s-textarea {
+        width: 100%; padding: 0.55rem 0.75rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--color-border-subtle);
+        background: var(--color-surface);
+        font-size: 0.85rem; color: var(--color-text-main);
+        font-family: inherit; resize: vertical; min-height: 70px;
+        margin-top: 0.5rem;
+        transition: border-color 160ms ease-out;
+    }
+    .s-textarea:focus {
+        outline: none; border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(26,138,158,0.2);
+    }
+
+    /* --- Input grid (2 columns) --- */
+    .input-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+    .input-grid .field-card { margin-bottom: 0; }
+
+    /* --- Readonly info grid (3 columns) --- */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+    .info-grid .field-card { margin-bottom: 0; }
+
+    /* --- Radio pills --- */
+    .radio-group { display: flex; gap: 0.6rem; }
+    .radio-option { flex: 1; position: relative; }
+    .radio-option input[type="radio"] {
+        position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .radio-label {
+        display: flex; align-items: center; justify-content: center;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-pill);
+        border: 1.5px solid var(--color-border-subtle);
+        background: var(--color-surface);
+        font-size: 0.84rem; font-weight: 500;
+        color: var(--color-text-muted);
+        cursor: pointer; user-select: none;
+        transition: all 160ms ease-out;
+        text-align: center;
+    }
+    .radio-label:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        background: var(--color-primary-soft);
+    }
+    .radio-option input[type="radio"]:checked + .radio-label {
+        background: linear-gradient(135deg, var(--color-primary), #22b8cf);
+        color: #fff; border-color: transparent;
+        box-shadow: 0 2px 8px rgba(26,138,158,0.3);
+    }
+    .radio-option input[type="radio"]:focus-visible + .radio-label {
+        outline: 2px solid var(--color-primary); outline-offset: 2px;
+    }
+
+    /* Screening type uses accent green */
+    .screening-type-group .radio-option input[type="radio"]:checked + .radio-label {
+        background: linear-gradient(135deg, var(--color-accent), #4caf50);
+        box-shadow: 0 2px 8px rgba(106,176,76,0.3);
+    }
+
+    /* --- Checkbox group --- */
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .checkbox-option { position: relative; }
+    .checkbox-option input[type="checkbox"] {
+        position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .checkbox-label {
+        display: inline-flex; align-items: center;
+        padding: 0.45rem 0.85rem;
+        border-radius: var(--radius-pill);
+        border: 1.5px solid var(--color-border-subtle);
+        background: var(--color-surface);
+        font-size: 0.82rem; font-weight: 500;
+        color: var(--color-text-muted);
+        cursor: pointer; user-select: none;
+        transition: all 160ms ease-out;
+    }
+    .checkbox-label:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        background: var(--color-primary-soft);
+    }
+    .checkbox-option input[type="checkbox"]:checked + .checkbox-label {
+        background: var(--color-primary);
+        color: #fff; border-color: transparent;
+        box-shadow: 0 2px 6px rgba(26,138,158,0.25);
+    }
+    .checkbox-option input[type="checkbox"]:focus-visible + .checkbox-label {
+        outline: 2px solid var(--color-primary); outline-offset: 2px;
+    }
+
+    /* --- Conditional sections --- */
+    .conditional { display: none; animation: fadeSlide 0.3s ease-out; }
+    .conditional.visible { display: block; }
+
+    /* --- Submit --- */
+    .submit-btn {
+        width: 100%; margin-top: 1.5rem;
+        padding: 0.8rem 1.3rem;
+        border-radius: var(--radius-pill);
+        border: none;
+        background: linear-gradient(135deg, var(--color-accent), #4caf50);
+        color: #fff; font-size: 0.95rem; font-weight: 600;
+        letter-spacing: 0.03em; text-transform: uppercase;
+        cursor: pointer; font-family: inherit;
+        box-shadow: 0 4px 14px rgba(106,176,76,0.35);
+        transition: all 160ms ease-out;
+    }
+    .submit-btn:hover {
+        background: linear-gradient(135deg, #5a9e3e, var(--color-accent));
+        box-shadow: 0 6px 20px rgba(106,176,76,0.5);
+        transform: translateY(-1px);
+    }
+
+    /* --- Global error / success --- */
+    .global-msg {
+        display: none; text-align: center;
+        font-size: 0.82rem; font-weight: 500;
+        margin-top: 0.75rem;
+        padding: 0.75rem 1rem; border-radius: var(--radius-md);
+        animation: fadeSlide 0.3s ease-out;
+    }
+    .global-msg.visible { display: block; }
+    .global-msg.error-msg {
+        background: rgba(239,68,68,0.08); color: #ef4444;
+        border: 1px solid rgba(239,68,68,0.2);
+    }
+    .global-msg.success-msg {
+        background: rgba(34,197,94,0.08); color: #166534;
+        border: 1px solid rgba(34,197,94,0.2);
+    }
+
+    /* --- Animation --- */
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 640px) {
+        .screening-card { padding: 1.5rem 1.15rem; }
+        .input-grid { grid-template-columns: 1fr; }
+        .info-grid { grid-template-columns: 1fr 1fr; }
+        .radio-group { flex-direction: column; gap: 0.4rem; }
+        .checkbox-group { gap: 0.4rem; }
+    }
+    @media (max-width: 400px) {
+        .info-grid { grid-template-columns: 1fr; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-top">
+        <div class="logo" id="logoBtn">
+            <img src="logo.jpeg" alt="LifeFlow">
+        </div>
+        <div class="nav-links">
+            <button id="backBtn">Back to Dashboard</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================ -->
+<!-- SCREENING FORM                                   -->
+<!-- ================================================ -->
+<div class="container screening-card">
+
+    <div class="screening-header-icon">&#9879;</div>
+    <h2 class="text-center">Donation Screening Form</h2>
+    <p class="text-muted mt-sm text-center" style="font-size:0.88rem;">
+        Complete the screening to determine donor eligibility.
+    </p>
+
+    <!-- =============================== -->
+    <!-- 1. SCREENING TYPE SELECTOR      -->
+    <!-- =============================== -->
+    <div class="s-section">
+        <div class="s-section-title">Screening Type</div>
+        <div class="field-card" data-field="screeningType">
+            <span class="field-label">Where is this screening being conducted?</span>
+            <div class="radio-group screening-type-group">
+                <div class="radio-option">
+                    <input type="radio" name="screeningType" id="stHospital" value="hospital">
+                    <label for="stHospital" class="radio-label">Hospital Detailed Screening</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="screeningType" id="stCamp" value="camp">
+                    <label for="stCamp" class="radio-label">Camp Screening</label>
+                </div>
+            </div>
+            <div class="inline-error">Please select a screening type.</div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 2. DONOR INFORMATION (readonly) -->
+    <!-- =============================== -->
+    <div class="s-section">
+        <div class="s-section-title">Donor Information</div>
+        <div class="info-grid">
+            <div class="field-card">
+                <span class="field-label">Full Name</span>
+                <input type="text" class="s-input" id="donorName" value="Rahul Sharma" readonly>
+            </div>
+            <div class="field-card">
+                <span class="field-label">Age</span>
+                <input type="text" class="s-input" id="donorAge" value="24" readonly>
+            </div>
+            <div class="field-card">
+                <span class="field-label">Gender</span>
+                <input type="text" class="s-input" id="donorGender" value="Male" readonly>
+            </div>
+            <div class="field-card">
+                <span class="field-label">Blood Group</span>
+                <input type="text" class="s-input" id="donorBloodGroup" value="O+" readonly>
+            </div>
+            <div class="field-card">
+                <span class="field-label">Last Donation</span>
+                <input type="text" class="s-input" id="donorLastDonation" value="2025-12-01" readonly>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 3. PHYSICAL EXAMINATION         -->
+    <!-- =============================== -->
+    <div class="s-section">
+        <div class="s-section-title">Physical Examination</div>
+        <div class="input-grid">
+            <div class="field-card" data-field="weight">
+                <span class="field-label">Weight (kg)</span>
+                <input type="number" class="s-input" id="weight" placeholder="e.g. 65" min="1">
+                <div class="inline-error">Weight is required.</div>
+            </div>
+            <div class="field-card" data-field="height">
+                <span class="field-label">Height (cm)</span>
+                <input type="number" class="s-input" id="height" placeholder="e.g. 170" min="1">
+                <div class="inline-error">Height is required.</div>
+            </div>
+            <div class="field-card" data-field="systolicBP">
+                <span class="field-label">Systolic BP (mmHg)</span>
+                <input type="number" class="s-input" id="systolicBP" placeholder="e.g. 120" min="1">
+                <div class="inline-error">Systolic BP is required.</div>
+            </div>
+            <div class="field-card" data-field="diastolicBP">
+                <span class="field-label">Diastolic BP (mmHg)</span>
+                <input type="number" class="s-input" id="diastolicBP" placeholder="e.g. 80" min="1">
+                <div class="inline-error">Diastolic BP is required.</div>
+            </div>
+            <div class="field-card" data-field="temperature">
+                <span class="field-label">Temperature (&deg;C)</span>
+                <input type="number" class="s-input" id="temperature" placeholder="e.g. 36.6" step="0.1" min="1">
+                <div class="inline-error">Temperature is required.</div>
+            </div>
+            <div class="field-card" data-field="pulse">
+                <span class="field-label">Pulse Rate (bpm)</span>
+                <input type="number" class="s-input" id="pulse" placeholder="e.g. 72" min="1">
+                <div class="inline-error">Pulse rate is required.</div>
+            </div>
+        </div>
+        <!-- Hemoglobin: visible only for Hospital screening -->
+        <div class="conditional" id="hbField">
+            <div class="field-card" data-field="hemoglobin" style="margin-top:0.75rem;">
+                <span class="field-label">Hemoglobin (g/dL)</span>
+                <input type="number" class="s-input" id="hemoglobin" placeholder="e.g. 13.5" step="0.1" min="1">
+                <div class="inline-error">Hemoglobin is required for hospital screening.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 4. COMMON HEALTH QUESTIONS      -->
+    <!-- =============================== -->
+    <div class="s-section">
+        <div class="s-section-title">Health Questions</div>
+
+        <!-- Medication -->
+        <div class="field-card" data-field="medication">
+            <span class="field-label">Are you currently on any medication?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="medication" id="medYes" value="yes">
+                    <label for="medYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="medication" id="medNo" value="no">
+                    <label for="medNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="medication">
+                <textarea class="s-textarea" placeholder="Please describe your medication..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <!-- Fever / infection -->
+        <div class="field-card" data-field="fever">
+            <span class="field-label">Have you had fever or infection in the last 2 weeks?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="fever" id="feverYes" value="yes">
+                    <label for="feverYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="fever" id="feverNo" value="no">
+                    <label for="feverNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="fever">
+                <textarea class="s-textarea" placeholder="Please describe the illness..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <!-- Recent donation -->
+        <div class="field-card" data-field="recentDonation">
+            <span class="field-label">Have you donated blood in the last 3 months?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="recentDonation" id="rdYes" value="yes">
+                    <label for="rdYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="recentDonation" id="rdNo" value="no">
+                    <label for="rdNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="recentDonation">
+                <textarea class="s-textarea" placeholder="Approximate date and location..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 5a. DISEASE – Hospital checklist -->
+    <!-- =============================== -->
+    <div class="s-section conditional" id="diseaseHospital">
+        <div class="s-section-title">Disease History (Hospital)</div>
+        <div class="field-card" data-field="diseaseChecklist">
+            <span class="field-label">Select any conditions you have been diagnosed with:</span>
+            <div class="checkbox-group" id="diseaseCheckboxes">
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dDiabetes" value="Diabetes">
+                    <label for="dDiabetes" class="checkbox-label">Diabetes</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dHeart" value="Heart Disease">
+                    <label for="dHeart" class="checkbox-label">Heart Disease</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dCancer" value="Cancer">
+                    <label for="dCancer" class="checkbox-label">Cancer</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dTB" value="Tuberculosis">
+                    <label for="dTB" class="checkbox-label">Tuberculosis</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dHepatitis" value="Hepatitis">
+                    <label for="dHepatitis" class="checkbox-label">Hepatitis</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dHIV" value="HIV">
+                    <label for="dHIV" class="checkbox-label">HIV</label>
+                </div>
+                <div class="checkbox-option">
+                    <input type="checkbox" name="disease" id="dNone" value="None">
+                    <label for="dNone" class="checkbox-label">None</label>
+                </div>
+            </div>
+            <div class="conditional" id="diseaseDesc">
+                <textarea class="s-textarea" id="diseaseDescText" placeholder="Please describe your condition(s)..."></textarea>
+            </div>
+            <div class="inline-error">Please select at least one option.</div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 5b. DISEASE – Camp simple Q     -->
+    <!-- =============================== -->
+    <div class="s-section conditional" id="diseaseCamp">
+        <div class="s-section-title">Disease History (Camp)</div>
+        <div class="field-card" data-field="chronicIllness">
+            <span class="field-label">Do you have any serious chronic illness?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="chronicIllness" id="ciYes" value="yes">
+                    <label for="ciYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="chronicIllness" id="ciNo" value="no">
+                    <label for="ciNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="chronicIllness">
+                <textarea class="s-textarea" placeholder="Please describe your condition..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 6a. GENDER – Male section       -->
+    <!-- =============================== -->
+    <div class="s-section conditional" id="maleSection">
+        <div class="s-section-title">Additional Questions (Male)</div>
+
+        <div class="field-card" data-field="steroids">
+            <span class="field-label">Have you used steroids or testosterone supplements?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="steroids" id="sterYes" value="yes">
+                    <label for="sterYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="steroids" id="sterNo" value="no">
+                    <label for="sterNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="steroids">
+                <textarea class="s-textarea" placeholder="Please describe usage..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <div class="field-card" data-field="surgery">
+            <span class="field-label">Have you had any major surgery in the last 6 months?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="surgery" id="surgYes" value="yes">
+                    <label for="surgYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="surgery" id="surgNo" value="no">
+                    <label for="surgNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="conditional" data-desc-for="surgery">
+                <textarea class="s-textarea" placeholder="Please describe the surgery..."></textarea>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 6b. GENDER – Female section     -->
+    <!-- =============================== -->
+    <div class="s-section conditional" id="femaleSection">
+        <div class="s-section-title">Additional Questions (Female)</div>
+
+        <div class="field-card" data-field="pregnant">
+            <span class="field-label">Are you currently pregnant?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="pregnant" id="pregYes" value="yes">
+                    <label for="pregYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="pregnant" id="pregNo" value="no">
+                    <label for="pregNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <div class="field-card" data-field="breastfeeding">
+            <span class="field-label">Are you currently breastfeeding?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="breastfeeding" id="bfYes" value="yes">
+                    <label for="bfYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="breastfeeding" id="bfNo" value="no">
+                    <label for="bfNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <div class="field-card" data-field="menstruation">
+            <span class="field-label">Are you experiencing heavy menstrual bleeding?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="menstruation" id="menYes" value="yes">
+                    <label for="menYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="menstruation" id="menNo" value="no">
+                    <label for="menNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <div class="field-card" data-field="recentDelivery">
+            <span class="field-label">Have you had a recent delivery or miscarriage?</span>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="recentDelivery" id="rdlYes" value="yes">
+                    <label for="rdlYes" class="radio-label">Yes</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="recentDelivery" id="rdlNo" value="no">
+                    <label for="rdlNo" class="radio-label">No</label>
+                </div>
+            </div>
+            <div class="inline-error">Please answer this question.</div>
+        </div>
+
+        <!-- Description shown if any female answer is Yes -->
+        <div class="conditional" id="femaleDesc">
+            <div class="field-card" style="background:rgba(26,138,158,0.04);">
+                <span class="field-label">Please provide additional details:</span>
+                <textarea class="s-textarea" id="femaleDescText" placeholder="Describe your condition..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================== -->
+    <!-- 7. SUBMIT                       -->
+    <!-- =============================== -->
+    <button class="submit-btn" id="submitBtn">Submit Screening</button>
+
+    <div class="global-msg error-msg" id="globalError">
+        Please fill all required fields before submitting.
+    </div>
+    <div class="global-msg success-msg" id="globalSuccess">
+        &#10003; Screening form submitted successfully! Eligibility will be reviewed.
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<!-- ================================================ -->
+<!-- JAVASCRIPT                                       -->
+<!-- ================================================ -->
+<script>
+/* ===========================================================
+   LIFEFLOW – DONATION SCREENING FORM LOGIC
+   =========================================================== */
+
+/* ---------- Navigation ---------- */
+document.getElementById('logoBtn').addEventListener('click', () => {
+    window.location.href = 'index.html';
+});
+document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = 'donor-dashboard.html';
+});
+
+/* ---------- Helpers ---------- */
+const getRadio = (name) => {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : '';
+};
+const showEl = (el) => el.classList.add('visible');
+const hideEl = (el) => el.classList.remove('visible');
+
+/* ===========================================================
+   1. SCREENING TYPE TOGGLE
+   - Hospital → show hemoglobin + disease checklist
+   - Camp     → hide hemoglobin + show single chronic question
+   =========================================================== */
+const hbField = document.getElementById('hbField');
+const diseaseHospital = document.getElementById('diseaseHospital');
+const diseaseCamp = document.getElementById('diseaseCamp');
+
+document.querySelectorAll('input[name="screeningType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        const isHospital = radio.value === 'hospital';
+
+        /* Hemoglobin */
+        isHospital ? showEl(hbField) : hideEl(hbField);
+
+        /* Disease sections */
+        isHospital ? showEl(diseaseHospital) : hideEl(diseaseHospital);
+        isHospital ? hideEl(diseaseCamp) : showEl(diseaseCamp);
+
+        /* Reset disease inputs when switching */
+        if (!isHospital) {
+            document.querySelectorAll('input[name="disease"]').forEach(cb => { cb.checked = false; });
+            hideEl(document.getElementById('diseaseDesc'));
+            document.getElementById('diseaseDescText').value = '';
+        } else {
+            const ci = document.querySelector('input[name="chronicIllness"]:checked');
+            if (ci) ci.checked = false;
+            const ciBox = document.querySelector('[data-desc-for="chronicIllness"]');
+            if (ciBox) hideEl(ciBox);
+        }
+
+        radio.closest('.field-card').classList.remove('error');
+    });
+});
+
+/* ===========================================================
+   2. GENDER-SPECIFIC SECTION (auto-detect from readonly)
+   =========================================================== */
+const donorGender = document.getElementById('donorGender').value.trim().toLowerCase();
+const maleSection = document.getElementById('maleSection');
+const femaleSection = document.getElementById('femaleSection');
+
+if (donorGender === 'male') showEl(maleSection);
+else if (donorGender === 'female') showEl(femaleSection);
+
+/* Female: show description box if any answer is Yes */
+const femaleQs = ['pregnant', 'breastfeeding', 'menstruation', 'recentDelivery'];
+const femaleDescBox = document.getElementById('femaleDesc');
+
+femaleQs.forEach(name => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+        radio.addEventListener('change', () => {
+            const anyYes = femaleQs.some(q => getRadio(q) === 'yes');
+            anyYes ? showEl(femaleDescBox) : hideEl(femaleDescBox);
+        });
+    });
+});
+
+/* ===========================================================
+   3. YES → SHOW DESCRIPTION TEXTAREA
+   Applies to: medication, fever, recentDonation,
+               steroids, surgery, chronicIllness
+   =========================================================== */
+const descFields = ['medication', 'fever', 'recentDonation', 'steroids', 'surgery', 'chronicIllness'];
+
+descFields.forEach(name => {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+        radio.addEventListener('change', () => {
+            const box = document.querySelector(`[data-desc-for="${name}"]`);
+            if (!box) return;
+            getRadio(name) === 'yes' ? showEl(box) : hideEl(box);
+        });
+    });
+});
+
+/* ===========================================================
+   4. DISEASE CHECKBOX LOGIC (Hospital mode)
+   - "None" deselects all others
+   - Selecting a disease deselects "None"
+   - Show description if any disease (not None) is checked
+   =========================================================== */
+const diseaseCheckboxes = document.querySelectorAll('input[name="disease"]');
+const noneCheckbox = document.getElementById('dNone');
+const diseaseDescEl = document.getElementById('diseaseDesc');
+
+diseaseCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+        if (cb.value === 'None' && cb.checked) {
+            diseaseCheckboxes.forEach(o => { if (o !== cb) o.checked = false; });
+        } else if (cb.checked && noneCheckbox.checked) {
+            noneCheckbox.checked = false;
+        }
+
+        const hasDisease = Array.from(diseaseCheckboxes).some(c => c.checked && c.value !== 'None');
+        hasDisease ? showEl(diseaseDescEl) : hideEl(diseaseDescEl);
+
+        cb.closest('.field-card').classList.remove('error');
+    });
+});
+
+/* ===========================================================
+   5. CLEAR ERRORS ON USER INPUT
+   =========================================================== */
+document.querySelectorAll('.field-card input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        radio.closest('.field-card').classList.remove('error');
+    });
+});
+document.querySelectorAll('.field-card .s-input:not([readonly])').forEach(input => {
+    input.addEventListener('input', () => {
+        input.closest('.field-card').classList.remove('error');
+    });
+});
+
+/* ===========================================================
+   6. VALIDATION & SUBMIT
+   =========================================================== */
+document.getElementById('submitBtn').addEventListener('click', () => {
+    const errMsg = document.getElementById('globalError');
+    const okMsg = document.getElementById('globalSuccess');
+    hideEl(errMsg);
+    hideEl(okMsg);
+
+    const screeningType = getRadio('screeningType');
+    let hasError = false;
+
+    /* Helper: mark a field-card as invalid */
+    const flagError = (fieldName) => {
+        const el = document.querySelector(`.field-card[data-field="${fieldName}"]`);
+        if (el) { el.classList.add('error'); hasError = true; }
+    };
+
+    /* Helper: validate radio is selected */
+    const needRadio = (name) => { if (!getRadio(name)) flagError(name); };
+
+    /* Helper: validate number input is filled */
+    const needInput = (id) => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) flagError(id);
+    };
+
+    /* --- Screening type --- */
+    if (!screeningType) flagError('screeningType');
+
+    /* --- Physical examination --- */
+    ['weight', 'height', 'systolicBP', 'diastolicBP', 'temperature', 'pulse'].forEach(needInput);
+    if (screeningType === 'hospital') needInput('hemoglobin');
+
+    /* --- Health questions --- */
+    needRadio('medication');
+    needRadio('fever');
+    needRadio('recentDonation');
+
+    /* --- Disease section --- */
+    if (screeningType === 'hospital') {
+        const anyChecked = Array.from(diseaseCheckboxes).some(c => c.checked);
+        if (!anyChecked) flagError('diseaseChecklist');
+    } else if (screeningType === 'camp') {
+        needRadio('chronicIllness');
+    }
+
+    /* --- Gender-specific --- */
+    if (donorGender === 'male') {
+        needRadio('steroids');
+        needRadio('surgery');
+    } else if (donorGender === 'female') {
+        needRadio('pregnant');
+        needRadio('breastfeeding');
+        needRadio('menstruation');
+        needRadio('recentDelivery');
+    }
+
+    /* --- Result --- */
+    if (hasError) {
+        showEl(errMsg);
+        const first = document.querySelector('.field-card.error');
+        if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    /* All valid → show success */
+    showEl(okMsg);
+    okMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Disabled OTP field styling */
+        #donorOtp:disabled,
+        #adminOtp:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+            <img src="logo.jpeg">
+        </div>
+
+        <div class="nav-links">
+            <button onclick="goHome()">Home</button>
+            <button onclick="goRegister()">Register</button>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="container card-panel" id="loginContainer" style="max-width:480px;">
+        <h2 class="text-center" style="margin-bottom:1.25rem;">Login</h2>
+
+        <!-- Tab Buttons -->
+        <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem;">
+            <button class="btn btn-primary" id="tabAdmin" style="flex:1;" onclick="showSection('admin')">Admin / Hospital</button>
+            <button class="btn btn-secondary" id="tabDonor" style="flex:1;" onclick="showSection('donor')">Donor</button>
+        </div>
+
+        <!-- Admin & Hospital Section -->
+        <div class="login-section" id="sectionAdmin">
+            <h3><span>Admin</span> & Hospital Login</h3>
+
+            <label>Select Role</label>
+            <select id="adminRole">
+                <option value="hospital">Hospital / Receiver</option>
+                <option value="admin">Admin</option>
+            </select>
+
+            <label>Email</label>
+            <input type="email" id="adminEmail" placeholder="Enter email">
+
+            <label>OTP</label>
+            <div class="otp-group">
+                <input type="text" id="adminOtp" placeholder="Enter OTP" maxlength="6" disabled>
+                <button class="btn btn-secondary" onclick="sendAdminOtp()">Send OTP</button>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;" onclick="loginAdmin()">Verify & Login</button>
+        </div>
+
+        <!-- Donor Section -->
+        <div class="login-section" id="sectionDonor" style="display:none;">
+            <h3><span>Donor</span> Login</h3>
+
+            <label>Phone Number</label>
+            <input type="tel" id="donorPhone" placeholder="+91-XXXXXXXXXX">
+
+            <label>OTP</label>
+            <div class="otp-group">
+                <input type="text" id="donorOtp" placeholder="Enter OTP" maxlength="6" disabled>
+                <button class="btn btn-secondary" onclick="sendOtp()">Send OTP</button>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%;" onclick="loginDonor()">Verify & Login</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        &copy; 2025 LifeFlow | Blood Donation Management System
+    </div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goRegister(role) {
+    let url = "register.html";
+    if (role) url += "?role=" + encodeURIComponent(role);
+    window.location.href = url;
+}
+
+function showSection(type) {
+    var adminSec = document.getElementById('sectionAdmin');
+    var donorSec = document.getElementById('sectionDonor');
+    var tabAdmin = document.getElementById('tabAdmin');
+    var tabDonor = document.getElementById('tabDonor');
+    if (type === 'donor') {
+        adminSec.style.display = 'none';
+        donorSec.style.display = 'block';
+        tabDonor.className = 'btn btn-primary';
+        tabAdmin.className = 'btn btn-secondary';
+    } else {
+        adminSec.style.display = 'block';
+        donorSec.style.display = 'none';
+        tabAdmin.className = 'btn btn-primary';
+        tabDonor.className = 'btn btn-secondary';
+    }
+}
+
+// Auto-select section based on URL param
+(function preselectRole() {
+    var params = new URLSearchParams(window.location.search);
+    var role = params.get("role");
+    if (role === 'donor') {
+        showSection('donor');
+    } else {
+        showSection('admin');
+        if (role) {
+            var select = document.getElementById("adminRole");
+            var values = Array.from(select.options).map(function(o){ return o.value; });
+            if (values.includes(role)) select.value = role;
+        }
+    }
+})();
+
+var API_BASE = "http://127.0.0.1:8000";
+
+function sendAdminOtp() {
+    var email = document.getElementById("adminEmail").value.trim();
+    var role = document.getElementById("adminRole").value;
+    if (!email) { alert("Please enter your email."); return; }
+
+    var btn = event.target;
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    fetch(API_BASE + "/api/auth/request-email-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, user_type: role })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (result.ok) {
+            alert("OTP sent to " + email);
+            var otpInput = document.getElementById("adminOtp");
+            otpInput.disabled = false;
+            otpInput.placeholder = "Enter OTP";
+            otpInput.focus();
+        } else {
+            alert(result.data.message || "Failed to send OTP.");
+        }
+    })
+    .catch(function() { alert("Server error. Please try again."); })
+    .finally(function() {
+        btn.disabled = false;
+        btn.textContent = "Send OTP";
+    });
+}
+
+function loginAdmin() {
+    var email = document.getElementById("adminEmail").value.trim();
+    var otp = document.getElementById("adminOtp").value.trim();
+    var role = document.getElementById("adminRole").value;
+
+    if (!email) { alert("Please enter your email."); return; }
+    if (!otp) { alert("Please enter the OTP."); return; }
+
+    fetch(API_BASE + "/api/auth/verify-email-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, otp: otp })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (result.ok) {
+            localStorage.setItem("userRole", role);
+            localStorage.setItem("userEmail", email);
+            if (role === "hospital") {
+                window.location.href = "receiver-dashboard.html";
+            } else {
+                window.location.href = "admin-dashboard.html";
+            }
+        } else {
+            alert(result.data.message || "OTP verification failed.");
+        }
+    })
+    .catch(function() { alert("Server error. Please try again."); });
+}
+
+function sendOtp() {
+    var phone = document.getElementById("donorPhone").value;
+    if (!phone) { alert("Please enter a phone number."); return; }
+    alert("OTP sent to " + phone + " (placeholder)");
+
+    // Enable the OTP input field after OTP is sent
+    var otpInput = document.getElementById("donorOtp");
+    otpInput.disabled = false;
+    otpInput.placeholder = "Enter OTP";
+    otpInput.focus();
+}
+
+function loginDonor() {
+    var otp = document.getElementById("donorOtp").value;
+    if (!otp) { alert("Please enter the OTP."); return; }
+    localStorage.setItem("userRole", "donor");
+    window.location.href = "donor-dashboard.html";
+}
+</script>
+
+</body>
+</html>

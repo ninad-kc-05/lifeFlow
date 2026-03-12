@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Donor Status</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goDonorDashboard()">Back to Dashboard</button>
+    </div>
+</div>
+
+<div class="container card-panel card-narrow">
+    <h2 class="text-center">Donor Status Update</h2>
+    <p class="text-muted mt-sm text-center">Update your current availability status.</p>
+
+    <label>Current Status</label>
+    <div style="margin:0.5rem 0 1rem; padding:0.6rem 1rem; border-radius:var(--radius-pill); background:rgba(34,197,94,0.15); color:#22c55e; font-weight:600; font-size:0.9rem; display:inline-block;">
+        Active &amp; Available
+    </div>
+
+    <label>Update Status</label>
+    <select id="statusSelect">
+        <option value="active">Active &amp; Available</option>
+        <option value="unavailable">Temporarily Unavailable</option>
+        <option value="medical">Medical Hold</option>
+        <option value="inactive">Inactive</option>
+    </select>
+
+    <label>Reason (optional)</label>
+    <textarea id="statusReason" placeholder="Reason for status change..."></textarea>
+
+    <button class="btn btn-primary" style="width:100%;" onclick="updateStatus()">Update Status</button>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
+
+function updateStatus() {
+    var status = document.getElementById("statusSelect").value;
+    alert("Status updated to: " + status + " (placeholder)");
+    window.location.href = "donor-dashboard.html";
+}
+</script>
+
+</body>
+</html>

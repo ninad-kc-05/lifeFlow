@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Blood Donation Platform</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-top">
+            <div class="logo" onclick="goHome()">
+                <img src="logo.jpeg" alt="Logo">
+            </div>
+
+            <!-- Quote Slider (horizontal marquee) -->
+            <div class="quote-slider">
+                <div class="quote-track" id="quoteTrack">
+                    <span class="quote-item">&ldquo;Every blood donor is a hero.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Donate blood, save a life.&rdquo;</span>
+                    <span class="quote-item">&ldquo;The blood you donate gives someone another chance at life.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Be the reason someone smiles today &mdash; donate blood.&rdquo;</span>
+                    <span class="quote-item">&ldquo;One pint can save three lives.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Be the Reason Someone Lives.&rdquo;</span>
+                    <!-- Duplicate for seamless loop -->
+                    <span class="quote-item">&ldquo;Every blood donor is a hero.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Donate blood, save a life.&rdquo;</span>
+                    <span class="quote-item">&ldquo;The blood you donate gives someone another chance at life.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Be the reason someone smiles today &mdash; donate blood.&rdquo;</span>
+                    <span class="quote-item">&ldquo;One pint can save three lives.&rdquo;</span>
+                    <span class="quote-item">&ldquo;Be the Reason Someone Lives.&rdquo;</span>
+                </div>
+            </div>
+
+            <div class="nav-links">
+                <button onclick="goAbout()">About</button>
+                <button onclick="goTeam()">Team</button>
+                <button onclick="goContact()">Contact</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-text">
+                <h1>Save Lives Through <span>Blood Donation</span></h1>
+                <p>
+                    LifeFlow connects blood donors, hospitals, and patients
+                    on one platform to ensure timely and safe blood availability.
+                </p>
+
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="goRegister()">Get Started</button>
+                    <button class="btn btn-secondary" onclick="goAbout()">Learn More</button>
+                </div>
+            </div>
+
+            <!-- Hero Image Slider -->
+            <div class="hero-image-slider">
+                <div class="hero-slide active">
+                    <div class="hero-img-card">
+                        <img src="donate.jpg" alt="Donate Blood">
+                        <p class="hero-img-label">Donate</p>
+                    </div>
+                </div>
+                <div class="hero-slide">
+                    <div class="hero-img-card">
+                        <img src="request.jpg" alt="Request Blood">
+                        <p class="hero-img-label">Request</p>
+                    </div>
+                </div>
+                <div class="hero-slide">
+                    <div class="hero-img-card">
+                        <img src="save.jpg" alt="Save Lives">
+                        <p class="hero-img-label">Save Lives</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles Section -->
+        <div class="roles">
+            <h2>Choose Your Role</h2>
+
+            <div class="role-cards">
+                <div class="card">
+                    <h3>Donor</h3>
+                    <p>Register as a blood donor and help save lives.</p>
+                    <button class="btn btn-primary" onclick="goLogin('donor')">Donor Login</button>
+                </div>
+
+                <div class="card">
+                    <h3>Hospital / Blood Bank</h3>
+                    <p>Request blood and manage availability efficiently.</p>
+                    <button class="btn btn-primary" onclick="goLogin('receiver')">Hospital Login</button>
+                </div>
+
+                <div class="card">
+                    <h3>Admin</h3>
+                    <p>Manage users, requests, and blood inventory.</p>
+                    <button class="btn btn-primary" onclick="goLogin('admin')">Admin Login</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        © 2025 LifeFlow | Blood Donation Management System
+    </div>
+
+<script>
+    function goHome() { window.location.href = "index.html"; }
+    function goAbout() { window.location.href = "about.html"; }
+    function goContact() { window.location.href = "contact.html"; }
+    function goTeam() { window.location.href = "team.html"; }
+
+    function goRegister(role) {
+        let url = "register.html";
+        if (role) url += "?role=" + encodeURIComponent(role);
+        window.location.href = url;
+    }
+
+    function goLogin(role) {
+        let url = "login.html";
+        if (role) url += "?role=" + encodeURIComponent(role);
+        window.location.href = url;
+    }
+
+    // Hero image slider
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.hero-slide');
+    const totalSlides = slides.length;
+
+    function showSlide(index) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[index].classList.add('active');
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        showSlide(currentSlide);
+    }
+
+    // Auto-advance slides every 3 seconds
+    setInterval(nextSlide, 3000);
+</script>
+
+</body>
+</html>

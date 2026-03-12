@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Matched Requests</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goDonorDashboard()">Back to Dashboard</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="section-title">Matched <span>Requests</span></h2>
+    <p class="text-muted mt-sm">These blood requests match your profile (Blood Group: O+). Review and respond below.</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+        <thead>
+            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                <th style="padding:0.5rem 0.25rem;">Hospital</th>
+                <th style="padding:0.5rem 0.25rem;">Patient</th>
+                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+                <th style="padding:0.5rem 0.25rem;">Units Needed</th>
+                <th style="padding:0.5rem 0.25rem;">Priority</th>
+                <th style="padding:0.5rem 0.25rem;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
+                <td style="padding:0.45rem 0.25rem;">Priya M.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">1</td>
+                <td style="padding:0.45rem 0.25rem;">Normal</td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-success btn-sm" onclick="acceptRequest(this)">Accept</button>
+                    <button class="btn btn-secondary btn-sm" onclick="declineRequest(this)">Decline</button>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:0.45rem 0.25rem;">Metro Hospital</td>
+                <td style="padding:0.45rem 0.25rem;">Anil R.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">2</td>
+                <td style="padding:0.45rem 0.25rem;">Urgent</td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-success btn-sm" onclick="acceptRequest(this)">Accept</button>
+                    <button class="btn btn-secondary btn-sm" onclick="declineRequest(this)">Decline</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Donor Instructions Dropdown -->
+    <details class="instruction-dropdown">
+        <summary>Donor Instructions</summary>
+        <div class="dropdown-content">
+            <ul style="list-style:none; padding:0;">
+                <li>&bull; Drink plenty of water before donating.</li>
+                <li>&bull; Eat a healthy meal at least 2 hours prior.</li>
+                <li>&bull; Bring a valid photo ID to the donation center.</li>
+                <li>&bull; Avoid heavy exercise for 24 hours after donating.</li>
+                <li>&bull; Inform the center staff if you feel unwell at any point.</li>
+                <li>&bull; Wear comfortable clothing with sleeves that can be rolled up.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
+
+function acceptRequest(btn) {
+    var row = btn.closest("tr");
+    row.style.opacity = "0.5";
+    btn.parentElement.innerHTML = '<span style="color:#22c55e; font-weight:600;">Accepted</span>';
+    alert("You have accepted this request. (placeholder)");
+}
+
+function declineRequest(btn) {
+    var row = btn.closest("tr");
+    row.style.opacity = "0.4";
+    btn.parentElement.innerHTML = '<span style="color:#9ca3af; font-weight:600;">Declined</span>';
+}
+</script>
+
+</body>
+</html>

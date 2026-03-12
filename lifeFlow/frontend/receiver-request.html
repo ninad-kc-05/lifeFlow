@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeFlow – New Blood Request</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+      <img src="logo.jpeg" alt="LifeFlow" />
+    </div>
+    <div class="nav-links">
+      <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container card-panel card-narrow">
+    <h2 class="text-center">New Blood Request (Dummy)</h2>
+    <p class="text-muted mt-sm text-center">Form layout only; submission is non-functional.</p>
+
+    <label>Patient Name</label>
+    <input type="text" placeholder="Patient name" />
+
+    <label>Blood Group</label>
+    <select>
+      <option value="" disabled selected>Select Blood Group</option>
+      <option value="A+">A+</option>
+      <option value="A-">A-</option>
+      <option value="B+">B+</option>
+      <option value="B-">B-</option>
+      <option value="O+">O+</option>
+      <option value="O-">O-</option>
+      <option value="AB+">AB+</option>
+      <option value="AB-">AB-</option>
+    </select>
+
+    <label>Component Type</label>
+    <select>
+      <option value="" disabled selected>Select Component</option>
+      <option value="whole_blood">Whole Blood</option>
+      <option value="plasma">Plasma</option>
+      <option value="platelets">Platelets</option>
+    </select>
+
+    <label>Units Needed</label>
+    <input type="number" min="1" max="10" value="2" />
+
+    <label>Priority</label>
+    <select>
+      <option>Normal</option>
+      <option>Urgent</option>
+    </select>
+
+    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="fakeSubmit()">Submit (Dummy)</button>
+  </div>
+
+  <div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+  </div>
+
+  <script>
+    function goHome() { window.location.href = "index.html"; }
+    function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
+    function fakeSubmit() { alert("This is a dummy new request form."); }
+  </script>
+</body>
+</html>

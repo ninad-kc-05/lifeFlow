@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeFlow – Local Inventory</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+      <img src="logo.jpeg" alt="LifeFlow" />
+    </div>
+    <div class="nav-links">
+      <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container card-panel card-wide">
+    <h2 class="section-title">Local <span>Inventory</span> (Dummy)</h2>
+    <p class="text-muted mt-sm">Example snapshot of this hospital&#39;s stock.</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+      <thead>
+        <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+          <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+          <th style="padding:0.5rem 0.25rem;">Available Units</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">O+</td>
+          <td style="padding:0.45rem 0.25rem;">8</td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">A+</td>
+          <td style="padding:0.45rem 0.25rem;">6</td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">B+</td>
+          <td style="padding:0.45rem 0.25rem;">4</td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">AB-</td>
+          <td style="padding:0.45rem 0.25rem;">1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+  </div>
+
+  <script>
+    function goHome() { window.location.href = "index.html"; }
+    function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
+  </script>
+</body>
+</html>

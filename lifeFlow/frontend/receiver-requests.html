@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeFlow – My Requests</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+      <img src="logo.jpeg" alt="LifeFlow" />
+    </div>
+    <div class="nav-links">
+      <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container" style="max-width:1100px;">
+    <h2 class="section-title" style="text-align:center; margin-bottom:1rem;">My <span>Requests</span></h2>
+
+    <div class="requests-split">
+      <!-- Urgent Requests -->
+      <div class="card-panel">
+        <h3 style="color:var(--color-primary); font-size:1rem; margin-bottom:0.5rem;">🔴 Urgent</h3>
+        <table class="split-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Group</th>
+              <th>Units</th>
+              <th>Status</th>
+              <th>Information</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rahul S.</td>
+              <td>B+</td>
+              <td>2</td>
+              <td><span class="status-badge pending">Pending</span></td>
+              <td class="text-muted" style="font-size:0.8rem;">Requested: 28 Feb 2025, 10:30 AM</td>
+              <td><span class="text-muted" style="font-size:0.8rem; font-weight:600;">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Normal Requests -->
+      <div class="card-panel">
+        <h3 style="color:var(--color-accent); font-size:1rem; margin-bottom:0.5rem;">🟢 Normal</h3>
+        <table class="split-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Group</th>
+              <th>Units</th>
+              <th>Status</th>
+              <th>Information</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Anita K.</td>
+              <td>O-</td>
+              <td>1</td>
+              <td><span class="status-badge approved">Approved</span></td>
+              <td class="text-muted" style="font-size:0.8rem;">Requested: 27 Feb 2025, 03:15 PM</td>
+              <td><button class="btn btn-primary btn-sm" onclick="goToAllocatedPatients()">Allocated Patient</button></td>
+            </tr>
+            <tr>
+              <td>Imran P.</td>
+              <td>A+</td>
+              <td>3</td>
+              <td><span class="status-badge completed">Completed</span></td>
+              <td style="font-size:0.8rem;">Patient: Imran P., Age 34, Ward B2</td>
+              <td><span style="color:#22c55e; font-weight:600; font-size:0.8rem;">Donation Completed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+  </div>
+
+  <script>
+    function goHome() { window.location.href = "index.html"; }
+    function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
+    function goToAllocatedPatients() { window.location.href = "Allocated_patient_details.html"; }
+  </script>
+</body>
+</html>

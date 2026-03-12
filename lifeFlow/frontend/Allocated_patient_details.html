@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Allocated Patient Details</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="section-title">Allocated Donor <span>Details</span></h2>
+
+    <!-- Urgent Section -->
+    <h3 style="color:var(--color-primary); margin-top:1rem; font-size:1rem;">Urgent Requests</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
+        <thead>
+            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                <th style="padding:0.5rem 0.25rem;">Patient</th>
+                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+                <th style="padding:0.5rem 0.25rem;">Donor Assigned</th>
+                <th style="padding:0.5rem 0.25rem;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="urgentRow1">
+                <td style="padding:0.45rem 0.25rem;">Rahul S.</td>
+                <td style="padding:0.45rem 0.25rem;">B+</td>
+                <td style="padding:0.45rem 0.25rem;">Donor: Vikram T.</td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-success btn-sm" onclick="acceptAllocation('urgent', 1)">YES</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectAllocation('urgent', 1)">NO</button>
+                    <button class="btn btn-secondary btn-sm" id="urgentViewBtn1" onclick="alert('View details (placeholder)')">View</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Urgent Reason Box -->
+    <div class="reason-box" id="urgentReasonBox1">
+        <label style="margin-top:0;">Reason for Rejection</label>
+        <textarea id="urgentReason1" placeholder="Enter reason..." style="min-height:60px;"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="submitRejection('urgent', 1)" style="margin-top:0.5rem;">Submit</button>
+    </div>
+
+    <!-- Normal Section -->
+    <h3 style="color:var(--color-text-muted); margin-top:2rem; font-size:1rem;">Normal Requests</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
+        <thead>
+            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                <th style="padding:0.5rem 0.25rem;">Patient</th>
+                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+                <th style="padding:0.5rem 0.25rem;">Donor Assigned</th>
+                <th style="padding:0.5rem 0.25rem;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="normalRow1">
+                <td style="padding:0.45rem 0.25rem;">Priya M.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">Donor: Rohan S.</td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-success btn-sm" onclick="acceptAllocation('normal', 1)">YES</button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectAllocation('normal', 1)">NO</button>
+                    <button class="btn btn-secondary btn-sm" id="normalViewBtn1" onclick="alert('View details (placeholder)')">View</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Normal Reason Box -->
+    <div class="reason-box" id="normalReasonBox1">
+        <label style="margin-top:0;">Reason for Rejection</label>
+        <textarea id="normalReason1" placeholder="Enter reason..." style="min-height:60px;"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="submitRejection('normal', 1)" style="margin-top:0.5rem;">Submit</button>
+    </div>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
+
+function acceptAllocation(type, id) {
+    // Update status to completed
+    alert("Allocation accepted! Status updated to Completed.\n\nThe donor has been confirmed and the request status is now marked as Completed.");
+    var row = document.getElementById(type + "Row" + id);
+    if (row) row.style.opacity = "0.5";
+    
+    // Hide action buttons
+    var actionCell = row.querySelector('td:last-child');
+    if (actionCell) {
+        actionCell.innerHTML = '<span style="color:#22c55e; font-weight:600; font-size:0.85rem;">✓ Completed</span>';
+    }
+}
+
+function rejectAllocation(type, id) {
+    var box = document.getElementById(type + "ReasonBox" + id);
+    if (box) box.classList.add("show");
+}
+
+function submitRejection(type, id) {
+    var reason = document.getElementById(type + "Reason" + id).value;
+    if (!reason) { alert("Please enter a reason."); return; }
+    
+    // Store rejection reason (in real app, this would be sent to backend)
+    alert("Rejection submitted successfully!\n\nReason: " + reason + "\n\nThis rejection will be visible in admin-requests.html with 'Rejected' status.");
+
+    // Hide reason box
+    var box = document.getElementById(type + "ReasonBox" + id);
+    if (box) box.classList.remove("show");
+
+    // Update action buttons
+    var row = document.getElementById(type + "Row" + id);
+    if (row) {
+        row.style.opacity = "0.4";
+        var actionCell = row.querySelector('td:last-child');
+        if (actionCell) {
+            actionCell.innerHTML = '<span style="color:#ef4444; font-weight:600; font-size:0.85rem;">✗ Rejected</span>';
+        }
+    }
+}
+</script>
+
+</body>
+</html>

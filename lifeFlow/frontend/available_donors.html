@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Available Donors</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goAdminRequests()">Back to Requests</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="section-title">Available <span>Donors</span></h2>
+    <p class="text-muted mt-sm">Donors matching the requested blood group and currently available.</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+        <thead>
+            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                <th style="padding:0.5rem 0.25rem;">Name</th>
+                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+                <th style="padding:0.5rem 0.25rem;">City</th>
+                <th style="padding:0.5rem 0.25rem;">Last Donation</th>
+                <th style="padding:0.5rem 0.25rem;">Status</th>
+                <th style="padding:0.5rem 0.25rem;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:0.45rem 0.25rem;">Rohan S.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">Pune</td>
+                <td style="padding:0.45rem 0.25rem;">45 days ago</td>
+                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Rohan S.')">Assign</button>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:0.45rem 0.25rem;">Vikram T.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">Mumbai</td>
+                <td style="padding:0.45rem 0.25rem;">90 days ago</td>
+                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Vikram T.')">Assign</button>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:0.45rem 0.25rem;">Sneha D.</td>
+                <td style="padding:0.45rem 0.25rem;">O+</td>
+                <td style="padding:0.45rem 0.25rem;">Nashik</td>
+                <td style="padding:0.45rem 0.25rem;">120 days ago</td>
+                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
+                <td style="padding:0.45rem 0.25rem;">
+                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Sneha D.')">Assign</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goAdminRequests() { window.location.href = "admin-requests.html"; }
+
+function assignDonor(btn, name) {
+    alert("Donor " + name + " has been assigned to the request. (placeholder)");
+    btn.disabled = true;
+    btn.textContent = "Assigned";
+    btn.closest("tr").style.opacity = "0.5";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg">
+    </div>
+
+    <div class="nav-links">
+        <button onclick="goHome()">Home</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="container">
+    <h2>Welcome, Admin 👑</h2>
+
+    <!-- High-level stats -->
+    <div class="cards mt-sm">
+        <div class="card">
+            <h3>Total Donors</h3>
+            <p class="text-muted">1,248 active donors</p>
+        </div>
+        <div class="card">
+            <h3>Open Requests</h3>
+            <p class="text-muted">18 awaiting approval</p>
+        </div>
+        <div class="card">
+            <h3>Units Available</h3>
+            <p class="text-muted">312 units across all hospitals</p>
+        </div>
+        <div class="card">
+            <h3>Today&#39;s Donations</h3>
+            <p class="text-muted">9 successful donations</p>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="cards mt-lg">
+        <div class="card">
+            <h3>Manage Users</h3>
+            <p>View and control donors, hospitals, and admins.</p>
+            <button class="btn btn-primary" onclick="manageUsers()">Manage Users</button>
+        </div>
+
+        <div class="card">
+            <h3>Blood Requests</h3>
+            <p>Review and approve blood requests.</p>
+            <button class="btn btn-primary" onclick="manageRequests()">View Requests</button>
+        </div>
+
+        <div class="card">
+            <h3>Blood Inventory</h3>
+            <p>Monitor blood availability across hospitals.</p>
+            <button class="btn btn-primary" onclick="manageInventory()">View Inventory</button>
+        </div>
+
+        <div class="card">
+            <h3>Reports</h3>
+            <p>System analytics and donation statistics.</p>
+            <button class="btn btn-primary" onclick="viewReports()">View Reports</button>
+        </div>
+    </div>
+
+    <!-- Recent activity list -->
+    <div class="card-panel mt-lg">
+        <h3>Recent Activity</h3>
+        <p class="text-muted mt-sm">Snapshot of the latest actions in the system (dummy data).</p>
+        <ul class="mt-sm" style="list-style: none; padding-left: 0; font-size: 0.9rem;">
+            <li>• Hospital CityCare created a request for <strong>O+</strong> (2 units).</li>
+            <li>• Donor <strong>Rohan S.</strong> completed a donation at LifeCare Blood Bank.</li>
+            <li>• Inventory updated: <strong>A-</strong> stock increased by 4 units.</li>
+            <li>• New donor <strong>Ananya P.</strong> registered.</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() {
+    window.location.href = "index.html";
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+
+function manageUsers() {
+    window.location.href = "admin-users.html";
+}
+
+function manageRequests() {
+    window.location.href = "admin-requests.html";
+}
+
+function manageInventory() {
+    window.location.href = "admin-inventory.html";
+}
+
+function viewReports() {
+    window.location.href = "admin-reports.html";
+}
+
+// Role protection
+if (localStorage.getItem("userRole") !== "admin") {
+    alert("Unauthorized access!");
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

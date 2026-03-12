@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – About Us</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+            <img src="logo.jpeg">
+        </div>
+        <div class="nav-links">
+            <button onclick="goHome()">Home</button>
+            <button onclick="goContact()">Contact</button>
+            <button onclick="goTeam()">Team</button>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width:960px;">
+    <h1 class="section-title" style="text-align:center; margin-bottom:0.5rem;">About <span>LifeFlow</span></h1>
+    <p class="text-muted" style="text-align:center; margin-bottom:2rem;">Be the Reason Someone Lives &mdash; here&rsquo;s how the journey works.</p>
+
+    <!-- Flow Row 1: Image Left / Text Right -->
+    <div class="flow-row">
+        <div class="flow-img">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="260" height="180" rx="16" fill="#e0f2f1"/>
+                <circle cx="130" cy="75" r="40" fill="none" stroke="#1a8a9e" stroke-width="2.5"/>
+                <path d="M128 45C124 52 114 63 114 75C114 85.5 120.5 92 130 92C139.5 92 146 85.5 146 75C146 63 136 52 132 45Z" fill="#1a8a9e" fill-opacity="0.7"/>
+                <circle cx="131" cy="71" r="7" fill="#b2dfdb" fill-opacity="0.85"/>
+                <text x="130" y="140" text-anchor="middle" fill="#1a8a9e" font-size="13" font-weight="600" font-family="Poppins">Register as a Donor</text>
+                <text x="130" y="158" text-anchor="middle" fill="#64748b" font-size="10" font-family="Poppins">Create your profile in minutes</text>
+            </svg>
+        </div>
+        <div class="flow-text">
+            <h3>1. Donor Registration</h3>
+            <p>Donors sign up with basic information, blood group, and contact details. An OTP-based login keeps the process simple and secure.</p>
+        </div>
+    </div>
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Flow Row 2: Text Left / Image Right -->
+    <div class="flow-row flow-row-reverse">
+        <div class="flow-img">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="260" height="180" rx="16" fill="#e8f5e9"/>
+                <rect x="55" y="35" width="150" height="28" rx="6" fill="#6ab04c" fill-opacity="0.15" stroke="#6ab04c" stroke-width="1.5"/>
+                <text x="130" y="54" text-anchor="middle" fill="#6ab04c" font-size="12" font-weight="600" font-family="Poppins">New Blood Request</text>
+                <rect x="55" y="75" width="150" height="28" rx="6" fill="#1a8a9e" fill-opacity="0.12" stroke="#1a8a9e" stroke-width="1.5"/>
+                <text x="130" y="94" text-anchor="middle" fill="#1a8a9e" font-size="11" font-family="Poppins">Patient: name &bull; B+ &bull; 2 Units</text>
+                <text x="130" y="135" text-anchor="middle" fill="#64748b" font-size="10" font-family="Poppins">Hospitals raise blood requests</text>
+                <text x="130" y="155" text-anchor="middle" fill="#64748b" font-size="10" font-family="Poppins">with priority &amp; component type</text>
+            </svg>
+        </div>
+        <div class="flow-text">
+            <h3>2. Hospital Raises Request</h3>
+            <p>Hospitals submit blood requests specifying the blood group, component type (Plasma, Platelets, or Whole Blood), units needed, and priority level.</p>
+        </div>
+    </div>
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Flow Row 3: Image Left / Text Right -->
+    <div class="flow-row">
+        <div class="flow-img">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="260" height="180" rx="16" fill="#e0f7fa"/>
+                <circle cx="90" cy="80" r="22" fill="#1a8a9e" fill-opacity="0.15" stroke="#1a8a9e" stroke-width="1.5"/>
+                <text x="90" y="85" text-anchor="middle" fill="#1a8a9e" font-size="20" font-family="Poppins">&#128269;</text>
+                <line x1="115" y1="80" x2="145" y2="80" stroke="#6ab04c" stroke-width="2" stroke-dasharray="4 4"/>
+                <circle cx="170" cy="80" r="22" fill="#6ab04c" fill-opacity="0.15" stroke="#6ab04c" stroke-width="1.5"/>
+                <text x="170" y="85" text-anchor="middle" fill="#6ab04c" font-size="20" font-family="Poppins">&#10003;</text>
+                <text x="130" y="135" text-anchor="middle" fill="#1a8a9e" font-size="13" font-weight="600" font-family="Poppins">Admin Reviews &amp; Matches</text>
+                <text x="130" y="155" text-anchor="middle" fill="#64748b" font-size="10" font-family="Poppins">Search donors &amp; approve requests</text>
+            </svg>
+        </div>
+        <div class="flow-text">
+            <h3>3. Admin Matches Donor</h3>
+            <p>The admin reviews incoming requests, searches for compatible donors in the system, and allocates the right donor to each request.</p>
+        </div>
+    </div>
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Flow Row 4: Text Left / Image Right -->
+    <div class="flow-row flow-row-reverse">
+        <div class="flow-img">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="260" height="180" rx="16" fill="#fff3e0"/>
+                <rect x="50" y="40" width="160" height="30" rx="8" fill="#1a8a9e" fill-opacity="0.1" stroke="#1a8a9e" stroke-width="1.5"/>
+                <text x="130" y="60" text-anchor="middle" fill="#1a8a9e" font-size="12" font-weight="600" font-family="Poppins">Donation Request</text>
+                <text x="130" y="100" text-anchor="middle" fill="#64748b" font-size="11" font-family="Poppins">Donor reviews &amp; accepts</text>
+                <rect x="80" y="115" width="100" height="30" rx="8" fill="#6ab04c" fill-opacity="0.2" stroke="#6ab04c" stroke-width="1.5"/>
+                <text x="130" y="135" text-anchor="middle" fill="#6ab04c" font-size="12" font-weight="600" font-family="Poppins">Accept &#10003;</text>
+            </svg>
+        </div>
+        <div class="flow-text">
+            <h3>4. Donor Accepts &amp; Donates</h3>
+            <p>The matched donor receives a notification, reviews the request details, and confirms their availability. They then visit the hospital to donate.</p>
+        </div>
+    </div>
+    <div class="flow-arrow">&#8595;</div>
+
+    <!-- Flow Row 5: Image Left / Text Right -->
+    <div class="flow-row">
+        <div class="flow-img">
+            <svg viewBox="0 0 260 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="260" height="180" rx="16" fill="#e8f5e9"/>
+                <circle cx="130" cy="70" r="35" fill="#6ab04c" fill-opacity="0.15" stroke="#6ab04c" stroke-width="2"/>
+                <text x="130" y="78" text-anchor="middle" fill="#6ab04c" font-size="32" font-family="Poppins">&#10004;</text>
+                <text x="130" y="130" text-anchor="middle" fill="#6ab04c" font-size="14" font-weight="700" font-family="Poppins">Life Saved!</text>
+                <text x="130" y="152" text-anchor="middle" fill="#64748b" font-size="10" font-family="Poppins">Request completed &amp; recorded</text>
+            </svg>
+        </div>
+        <div class="flow-text">
+            <h3>5. Request Fulfilled</h3>
+            <p>Once the donation is complete, the request is marked as fulfilled. The entire journey is tracked and visible to all stakeholders through their dashboards.</p>
+        </div>
+    </div>
+
+    <!-- Key Facts Strip -->
+    <div style="margin-top:2.5rem; padding:1.25rem; background:var(--color-surface); border:1px solid var(--color-border-subtle); border-radius:var(--radius-lg);">
+        <h3 style="font-size:1rem; color:var(--color-primary); margin-bottom:0.75rem; text-align:center;">Why It Matters</h3>
+        <div class="about-pill-grid" style="justify-content:center;">
+            <span class="about-pill">1 donation = up to 3 lives saved</span>
+            <span class="about-pill">Blood cannot be manufactured</span>
+            <span class="about-pill">Every 2 seconds someone needs blood</span>
+            <span class="about-pill">O&minus; is the universal donor type</span>
+        </div>
+        <div style="margin-top:0.75rem; text-align:center;">
+            <a href="https://www.who.int/campaigns/world-blood-donor-day" target="_blank" style="color:var(--color-primary); text-decoration:none; font-size:0.85rem; margin-right:1rem;">WHO &ndash; Blood Donor Day &#8599;</a>
+            <a href="https://www.redcrossblood.org/" target="_blank" style="color:var(--color-primary); text-decoration:none; font-size:0.85rem; margin-right:1rem;">Red Cross &#8599;</a>
+            <a href="https://www.nbtc.naco.gov.in/" target="_blank" style="color:var(--color-primary); text-decoration:none; font-size:0.85rem;">NBTC India &#8599;</a>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goContact() { window.location.href = "contact.html"; }
+function goTeam() { window.location.href = "team.html"; }
+</script>
+
+</body>
+</html>

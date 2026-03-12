@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeFlow – Admin Blood Requests</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+      <img src="logo.jpeg" alt="LifeFlow" />
+    </div>
+    <div class="nav-links">
+      <button onclick="goAdminDashboard()">Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="container card-panel card-wide">
+    <h2 class="section-title">Blood <span>Requests</span></h2>
+    <p class="text-muted mt-sm">Manage blood requests and search for matching donors.</p>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+      <thead>
+        <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+          <th style="padding:0.5rem 0.25rem;">Request ID</th>
+          <th style="padding:0.5rem 0.25rem;">Hospital</th>
+          <th style="padding:0.5rem 0.25rem;">Patient</th>
+          <th style="padding:0.5rem 0.25rem;">Status</th>
+          <th style="padding:0.5rem 0.25rem;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">#REQ-1001</td>
+          <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
+          <td style="padding:0.45rem 0.25rem;">Rahul S.</td>
+          <td style="padding:0.45rem 0.25rem;"><span class="status-badge pending">Pending</span></td>
+          <td style="padding:0.45rem 0.25rem;" id="action1">
+            <button class="btn btn-primary btn-sm" onclick="searchDonor(1)">Search for Donor</button>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">#REQ-1002</td>
+          <td style="padding:0.45rem 0.25rem;">LifeCare Blood Bank</td>
+          <td style="padding:0.45rem 0.25rem;">Anita K.</td>
+          <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Approved</span></td>
+          <td style="padding:0.45rem 0.25rem;" id="action2">
+            <span style="color:#22c55e; font-weight:600; font-size:0.85rem;">Approved (Completion)</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">#REQ-1003</td>
+          <td style="padding:0.45rem 0.25rem;">Metro Hospital</td>
+          <td style="padding:0.45rem 0.25rem;">Imran P.</td>
+          <td style="padding:0.45rem 0.25rem;"><span class="status-badge completed">Completed</span></td>
+          <td style="padding:0.45rem 0.25rem;" id="action3">
+            <span style="color:#3b82f6; font-weight:600; font-size:0.85rem;">Donation Successful</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0.45rem 0.25rem;">#REQ-1004</td>
+          <td style="padding:0.45rem 0.25rem;">Apollo Hospital</td>
+          <td style="padding:0.45rem 0.25rem;">Priya M.</td>
+          <td style="padding:0.45rem 0.25rem;"><span class="status-badge" style="background: rgba(239,68,68,0.15); color: #ef4444;">Rejected</span></td>
+          <td style="padding:0.45rem 0.25rem;" id="action4">
+            <button class="btn btn-secondary btn-sm" onclick="viewRejectionReason()">View Reason</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+  </div>
+
+  <script>
+    function goHome() { window.location.href = "index.html"; }
+    function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
+
+    function searchDonor(rowId) {
+        var cell = document.getElementById("action" + rowId);
+        if (!cell) return;
+        cell.innerHTML = '<a href="available_donors.html" class="btn btn-success btn-sm" style="text-decoration:none;">View Available Donors</a>';
+    }
+
+    function viewRejectionReason() {
+        alert("Rejection Reason: Patient condition stabilized, blood not required anymore.\n\nSubmitted by: CityCare Hospital\nDate: 28 Feb 2025, 2:45 PM");
+    }
+  </script>
+</body>
+</html>

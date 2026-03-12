@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Hospital Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+            <img src="logo.jpeg">
+        </div>
+
+        <div class="nav-links">
+            <button onclick="goHome()">Home</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="container">
+    <h2>Welcome, Hospital 🏥</h2>
+
+    <!-- Overview Cards -->
+    <div class="cards mt-sm">
+        <div class="card">
+            <h3>Request Pending</h3>
+            <p class="text-muted"><strong style="font-size:1.4rem; color:var(--color-primary);">5</strong> pending requests</p>
+        </div>
+        <div class="card">
+            <h3>Approved Request</h3>
+            <p class="text-muted"><strong style="font-size:1.4rem; color:#22c55e;">3</strong> approved requests</p>
+        </div>
+        <div class="card">
+            <h3>Completed Request</h3>
+            <p class="text-muted"><strong style="font-size:1.4rem; color:#3b82f6;">8</strong> completed requests</p>
+        </div>
+    </div>
+
+    <!-- Main actions -->
+    <div class="cards mt-lg">
+        <div class="card">
+            <h3>Request Blood</h3>
+            <p>Create a new blood request for patients.</p>
+            <button class="btn btn-primary" onclick="requestBlood()">New Request</button>
+        </div>
+
+        <div class="card">
+            <h3>My Requests</h3>
+            <p>View all blood requests made by your hospital.</p>
+            <button class="btn btn-primary" onclick="viewRequests()">View Requests</button>
+        </div>
+    </div>
+
+    <!-- Hospital Instructions -->
+    <div class="card-panel mt-lg">
+        <h3>🏥 Hospital Instructions</h3>
+        <ul class="mt-sm" style="list-style:none; padding-left:0; font-size:0.9rem; color:var(--color-text-muted); line-height:1.8;">
+            <li>• Verify patient identity before submitting a blood request.</li>
+            <li>• Ensure correct blood group is selected for each request.</li>
+            <li>• Urgent requests are prioritized by the admin for faster matching.</li>
+            <li>• Review allocated donor details on the Allocated Patient Details page.</li>
+            <li>• Contact admin for any discrepancies in request status.</li>
+        </ul>
+    </div>
+
+    <!-- Pending Requests Section -->
+    <div class="card-panel mt-lg" style="display:none;">
+        <h3>Pending Requests</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.75rem;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                    <th style="padding:0.4rem 0.2rem;">Patient</th>
+                    <th style="padding:0.4rem 0.2rem;">Blood Group</th>
+                    <th style="padding:0.4rem 0.2rem;">Units</th>
+                    <th style="padding:0.4rem 0.2rem;">Priority</th>
+                    <th style="padding:0.4rem 0.2rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Rahul S.</td>
+                    <td style="padding:0.4rem 0.2rem;">B+</td>
+                    <td style="padding:0.4rem 0.2rem;">2</td>
+                    <td style="padding:0.4rem 0.2rem;">Urgent</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge pending">Pending</span></td>
+                </tr>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Priya M.</td>
+                    <td style="padding:0.4rem 0.2rem;">O+</td>
+                    <td style="padding:0.4rem 0.2rem;">1</td>
+                    <td style="padding:0.4rem 0.2rem;">Normal</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge pending">Pending</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Approved Requests Section -->
+    <div class="card-panel mt-lg" style="display:none;">
+        <h3>Approved Requests</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.75rem;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                    <th style="padding:0.4rem 0.2rem;">Patient</th>
+                    <th style="padding:0.4rem 0.2rem;">Blood Group</th>
+                    <th style="padding:0.4rem 0.2rem;">Units</th>
+                    <th style="padding:0.4rem 0.2rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Anita K.</td>
+                    <td style="padding:0.4rem 0.2rem;">O-</td>
+                    <td style="padding:0.4rem 0.2rem;">1</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge approved">Approved</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Completed Requests Section -->
+    <div class="card-panel mt-lg" style="display:none;">
+        <h3>Completed Requests</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.75rem;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                    <th style="padding:0.4rem 0.2rem;">Patient</th>
+                    <th style="padding:0.4rem 0.2rem;">Blood Group</th>
+                    <th style="padding:0.4rem 0.2rem;">Units</th>
+                    <th style="padding:0.4rem 0.2rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Imran P.</td>
+                    <td style="padding:0.4rem 0.2rem;">A+</td>
+                    <td style="padding:0.4rem 0.2rem;">3</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge completed">Completed</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- My Request: Urgent & Normal -->
+    <div class="card-panel mt-lg" style="display:none;">
+        <h3>My Requests</h3>
+
+        <h4 style="color:var(--color-primary); margin-top:1rem; font-size:0.95rem;">Urgent</h4>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                    <th style="padding:0.4rem 0.2rem;">Patient</th>
+                    <th style="padding:0.4rem 0.2rem;">Blood Group</th>
+                    <th style="padding:0.4rem 0.2rem;">Units</th>
+                    <th style="padding:0.4rem 0.2rem;">Status</th>
+                    <th style="padding:0.4rem 0.2rem;">Information</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Rahul S.</td>
+                    <td style="padding:0.4rem 0.2rem;">B+</td>
+                    <td style="padding:0.4rem 0.2rem;">2</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge pending">Pending</span></td>
+                    <td style="padding:0.4rem 0.2rem; font-size:0.8rem; color:var(--color-text-muted);">Requested: 28 Feb 2025, 10:30 AM</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4 style="color:var(--color-text-muted); margin-top:1.25rem; font-size:0.95rem;">Normal</h4>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+                    <th style="padding:0.4rem 0.2rem;">Patient</th>
+                    <th style="padding:0.4rem 0.2rem;">Blood Group</th>
+                    <th style="padding:0.4rem 0.2rem;">Units</th>
+                    <th style="padding:0.4rem 0.2rem;">Status</th>
+                    <th style="padding:0.4rem 0.2rem;">Information</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Priya M.</td>
+                    <td style="padding:0.4rem 0.2rem;">O+</td>
+                    <td style="padding:0.4rem 0.2rem;">1</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge approved">Approved</span></td>
+                    <td style="padding:0.4rem 0.2rem; font-size:0.8rem; color:var(--color-text-muted);">Requested: 27 Feb 2025, 03:15 PM</td>
+                </tr>
+                <tr>
+                    <td style="padding:0.4rem 0.2rem;">Imran P.</td>
+                    <td style="padding:0.4rem 0.2rem;">A+</td>
+                    <td style="padding:0.4rem 0.2rem;">3</td>
+                    <td style="padding:0.4rem 0.2rem;"><span class="status-badge completed">Completed</span></td>
+                    <td style="padding:0.4rem 0.2rem; font-size:0.8rem;">Patient: Imran P., Age 34, Ward B2</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    © 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function logout() { localStorage.clear(); window.location.href = "login.html"; }
+function requestBlood() { window.location.href = "receiver-request.html"; }
+function viewRequests() { window.location.href = "receiver-requests.html"; }
+
+if (localStorage.getItem("userRole") !== "receiver") {
+    alert("Unauthorized access!");
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

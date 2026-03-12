@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow – Donor Registration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow">
+    </div>
+    <div class="nav-links">
+        <button onclick="goHome()">Home</button>
+        <button onclick="goLogin()">Login</button>
+    </div>
+</div>
+
+<div class="container card-panel card-wide">
+    <h2 class="text-center">Donor Registration</h2>
+    <p class="text-muted mt-sm text-center">Register as a blood donor. All fields marked * are required.</p>
+
+    <form id="donorForm" onsubmit="return false;">
+        <label>First Name *</label>
+        <input type="text" id="firstName" placeholder="First Name" required>
+
+        <label>Last Name *</label>
+        <input type="text" id="lastName" placeholder="Last Name" required>
+
+        <label>Mobile Number *</label>
+        <input type="tel" id="mobileNumber" placeholder="+91-XXXXXXXXXX" required>
+
+        <label>Date of Birth *</label>
+        <input type="date" id="dateOfBirth" required>
+
+        <label>Gender *</label>
+        <select id="gender" required>
+            <option value="">-- Select --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+
+        <label>Blood Group *</label>
+        <select id="bloodGroup" required>
+            <option value="">-- Select --</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+        </select>
+
+        <label>Address Line *</label>
+        <input type="text" id="addressLine" placeholder="Street / Area" required>
+
+        <label>City *</label>
+        <input type="text" id="city" placeholder="City" required>
+
+        <label>State *</label>
+        <input type="text" id="state" placeholder="State" required>
+
+        <label>Pincode *</label>
+        <input type="text" id="pincode" placeholder="Pincode" maxlength="10" required>
+
+        <label>Last Donation Date (optional)</label>
+        <input type="date" id="lastDonationDate">
+
+        <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="handleDonorRegister()">Register as Donor</button>
+    </form>
+
+    <p class="text-muted mt-sm text-center" style="font-size:0.82rem;">
+        Admin or Hospital? <a href="common_register.html" style="color:var(--color-primary); text-decoration:none;">Register here</a>
+    </p>
+</div>
+
+<div class="footer">
+    &copy; 2025 LifeFlow | Blood Donation Management System
+</div>
+
+<script>
+function goHome() { window.location.href = "index.html"; }
+function goLogin() { window.location.href = "login.html"; }
+
+async function handleDonorRegister() {
+    const fields = {
+        first_name: document.getElementById("firstName").value.trim(),
+        last_name: document.getElementById("lastName").value.trim(),
+        mobile_number: document.getElementById("mobileNumber").value.trim(),
+        date_of_birth: document.getElementById("dateOfBirth").value,
+        gender: document.getElementById("gender").value,
+        blood_group: document.getElementById("bloodGroup").value,
+        address_line: document.getElementById("addressLine").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        state: document.getElementById("state").value.trim(),
+        pincode: document.getElementById("pincode").value.trim(),
+    };
+
+    // Client-side required check
+    for (const [key, value] of Object.entries(fields)) {
+        if (!value) {
+            alert("Please fill all required fields.");
+            return;
+        }
+    }
+
+    // Optional field
+    const lastDonation = document.getElementById("lastDonationDate").value;
+    if (lastDonation) {
+        fields.last_donation_date = lastDonation;
+    }
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/api/register/donor/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields),
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            alert(data.message);
+            window.location.href = "login.html?role=donor";
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert("Network error. Please try again.");
+    }
+}
+</script>
+
+</body>
+</html>

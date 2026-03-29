@@ -31,15 +31,15 @@
     <div class="cards mt-sm">
         <div class="card">
             <h3>Request Pending</h3>
-            <p class="text-muted"><strong style="font-size:1.4rem; color:var(--color-primary);">5</strong> pending requests</p>
+            <p class="text-muted"><strong id="pendingCount" style="font-size:1.4rem; color:var(--color-primary);">0</strong> pending requests</p>
         </div>
         <div class="card">
             <h3>Approved Request</h3>
-            <p class="text-muted"><strong style="font-size:1.4rem; color:#22c55e;">3</strong> approved requests</p>
+            <p class="text-muted"><strong id="approvedCount" style="font-size:1.4rem; color:#22c55e;">0</strong> approved requests</p>
         </div>
         <div class="card">
             <h3>Completed Request</h3>
-            <p class="text-muted"><strong style="font-size:1.4rem; color:#3b82f6;">8</strong> completed requests</p>
+            <p class="text-muted"><strong id="completedCount" style="font-size:1.4rem; color:#3b82f6;">0</strong> completed requests</p>
         </div>
     </div>
 
@@ -211,15 +211,78 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+
 function goHome() { window.location.href = "index.html"; }
 function logout() { localStorage.clear(); window.location.href = "login.html"; }
-function requestBlood() { window.location.href = "receiver-request.html"; }
-function viewRequests() { window.location.href = "receiver-requests.html"; }
+function getHospitalId() {
+    var params = new URLSearchParams(window.location.search);
+    var fromUrl = params.get("hospital_id");
+    if (fromUrl) {
+        localStorage.setItem("hospital_id", fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem("hospital_id");
+}
+
+function requestBlood() {
+    var hospitalId = getHospitalId();
+    if (hospitalId) {
+        window.location.href = "receiver-request.html?hospital_id=" + encodeURIComponent(String(hospitalId));
+        return;
+    }
+    window.location.href = "receiver-request.html";
+}
+
+function viewRequests() {
+    var hospitalId = getHospitalId();
+    if (hospitalId) {
+        window.location.href = "receiver-requests.html?hospital_id=" + encodeURIComponent(String(hospitalId));
+        return;
+    }
+    window.location.href = "receiver-requests.html";
+}
+
+function loadReceiverStats() {
+    var hospitalId = getHospitalId();
+    if (!hospitalId) {
+        return;
+    }
+
+    fetch(API_BASE + "/requests/")
+        .then(function(res) { return res.json(); })
+        .then(function(items) {
+            var filtered = Array.isArray(items)
+                ? items.filter(function(item) { return String(item.hospital_id) === String(hospitalId); })
+                : [];
+
+            var pending = 0;
+            var approved = 0;
+            var completed = 0;
+
+            filtered.forEach(function(item) {
+                if (item.status === "pending") pending += 1;
+                if (item.status === "approved") approved += 1;
+                if (item.status === "completed") completed += 1;
+            });
+
+            document.getElementById("pendingCount").textContent = String(pending);
+            document.getElementById("approvedCount").textContent = String(approved);
+            document.getElementById("completedCount").textContent = String(completed);
+        })
+        .catch(function() {
+            document.getElementById("pendingCount").textContent = "-";
+            document.getElementById("approvedCount").textContent = "-";
+            document.getElementById("completedCount").textContent = "-";
+        });
+}
 
 if (localStorage.getItem("userRole") !== "receiver") {
     alert("Unauthorized access!");
     window.location.href = "login.html";
 }
+
+loadReceiverStats();
 </script>
 
 </body>

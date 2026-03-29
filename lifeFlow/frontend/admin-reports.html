@@ -18,22 +18,32 @@
   </div>
 
   <div class="container card-panel card-wide">
-    <h2 class="section-title">Analytics &amp; <span>Reports</span> (Dummy)</h2>
-    <p class="text-muted mt-sm">Placeholder KPIs to show how high-level analytics might look.</p>
+    <h2 class="section-title">Analytics &amp; <span>Reports</span></h2>
+    <p class="text-muted mt-sm">Live metrics from backend requests and inventory.</p>
 
     <div class="cards mt-md">
       <div class="card">
-        <h3>Total Donations (30 days)</h3>
-        <p class="text-muted">128 donations recorded across all centers.</p>
+        <h3>Total Requests</h3>
+        <p class="text-muted" id="totalRequestsMetric">Loading...</p>
       </div>
       <div class="card">
-        <h3>Average Fulfilment Time</h3>
-        <p class="text-muted">~ 3.4 hours from request to match.</p>
+        <h3>Fulfilled Requests</h3>
+        <p class="text-muted" id="fulfilledRequestsMetric">Loading...</p>
       </div>
       <div class="card">
         <h3>Top Requested Group</h3>
-        <p class="text-muted">O+ with 42 active requests.</p>
+        <p class="text-muted" id="topGroupMetric">Loading...</p>
       </div>
+    </div>
+
+    <div class="card-panel mt-lg">
+      <h3>Requests By Status</h3>
+      <ul id="statusBreakdown" class="mt-sm" style="list-style:none; padding-left:0; line-height:1.8;"></ul>
+    </div>
+
+    <div class="card-panel mt-lg">
+      <h3>Low Inventory Groups (&lt;= 2 units)</h3>
+      <ul id="lowInventory" class="mt-sm" style="list-style:none; padding-left:0; line-height:1.8;"></ul>
     </div>
   </div>
 
@@ -42,8 +52,72 @@
   </div>
 
   <script>
+    var API_BASE = "http://127.0.0.1:8000/api";
+
     function goHome() { window.location.href = "index.html"; }
     function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
+
+    function loadReports() {
+      Promise.all([
+        fetch(API_BASE + "/requests/").then(function(r) { return r.json(); }),
+        fetch(API_BASE + "/inventory/").then(function(r) { return r.json(); })
+      ])
+      .then(function(results) {
+        var requests = Array.isArray(results[0]) ? results[0] : [];
+        var inventory = Array.isArray(results[1]) ? results[1] : [];
+
+        var statusCount = { pending: 0, donor_needed: 0, assigned: 0, approved: 0, completed: 0, rejected: 0, cancelled: 0 };
+        var groupCount = {};
+
+        requests.forEach(function(item) {
+          var s = String(item.status || "pending");
+          if (statusCount[s] !== undefined) statusCount[s] += 1;
+          var bg = String(item.blood_group || "Unknown");
+          groupCount[bg] = (groupCount[bg] || 0) + 1;
+        });
+
+        var topGroup = "N/A";
+        var topCount = 0;
+        Object.keys(groupCount).forEach(function(bg) {
+          if (groupCount[bg] > topCount) {
+            topCount = groupCount[bg];
+            topGroup = bg;
+          }
+        });
+
+        document.getElementById("totalRequestsMetric").textContent = requests.length + " total requests";
+        document.getElementById("fulfilledRequestsMetric").textContent = (statusCount.completed + statusCount.approved) + " approved/completed";
+        document.getElementById("topGroupMetric").textContent = topGroup + " with " + topCount + " requests";
+
+        document.getElementById("statusBreakdown").innerHTML =
+          '<li>• Pending: <strong>' + statusCount.pending + '</strong></li>' +
+          '<li>• Searching for Donors: <strong>' + statusCount.donor_needed + '</strong></li>' +
+          '<li>• Assigned: <strong>' + statusCount.assigned + '</strong></li>' +
+          '<li>• Approved: <strong>' + statusCount.approved + '</strong></li>' +
+          '<li>• Completed: <strong>' + statusCount.completed + '</strong></li>';
+
+        var low = inventory.filter(function(item) { return (parseInt(item.units_available, 10) || 0) <= 2; });
+        document.getElementById("lowInventory").innerHTML = low.length
+          ? low.map(function(item) {
+              return '<li>• ' + item.blood_group + ' (' + item.component_type + '): <strong>' + item.units_available + '</strong> units</li>';
+            }).join('')
+          : '<li>• No low inventory groups right now.</li>';
+      })
+      .catch(function() {
+        document.getElementById("totalRequestsMetric").textContent = "Failed to load";
+        document.getElementById("fulfilledRequestsMetric").textContent = "Failed to load";
+        document.getElementById("topGroupMetric").textContent = "Failed to load";
+        document.getElementById("statusBreakdown").innerHTML = '<li>• Failed to fetch request metrics.</li>';
+        document.getElementById("lowInventory").innerHTML = '<li>• Failed to fetch inventory.</li>';
+      });
+    }
+
+    if (localStorage.getItem("userRole") !== "admin") {
+      alert("Unauthorized access!");
+      window.location.href = "login.html";
+    }
+
+    loadReports();
   </script>
 </body>
 </html>

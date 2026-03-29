@@ -18,54 +18,61 @@
     </div>
 </div>
 
-<div class="container card-panel card-wide">
+<div class="container card-panel card-wide card-table-wide">
     <h2 class="section-title">Available <span>Donors</span></h2>
     <p class="text-muted mt-sm">Donors matching the requested blood group and currently available.</p>
+    <p id="assignmentInfo" class="text-muted" style="margin-top:0.35rem;"></p>
 
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+    <div class="card-panel mt-sm" style="padding:0.75rem;">
+        <h3 style="margin:0 0 0.45rem 0; font-size:1rem;">Request Context</h3>
+        <p id="requestMeta" class="text-muted" style="margin:0;"></p>
+        <p id="requestSpecialNote" class="text-muted" style="margin:0.45rem 0 0 0;"></p>
+    </div>
+
+    <div class="card-panel mt-sm" style="padding:0.75rem;">
+        <h3 style="margin:0 0 0.45rem 0; font-size:1rem;">Filters</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:0.6rem; align-items:end;">
+            <div>
+                <label for="sortField">Sort By</label>
+                <select id="sortField">
+                    <option value="score">Score</option>
+                    <option value="last_donation_date">Last Donation Date</option>
+                </select>
+            </div>
+            <div>
+                <label for="sortOrder">Order</label>
+                <select id="sortOrder">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                </select>
+            </div>
+            <label style="display:flex; gap:0.45rem; align-items:center; margin-bottom:0.2rem; font-size:0.88rem; color:#334155;">
+                <input id="highestScoreOnly" type="checkbox" />
+                Highest Score Only
+            </label>
+        </div>
+    </div>
+
+    <div style="margin-top:1rem; overflow-x:auto;">
+    <table style="width:100%; min-width:1400px; border-collapse:collapse; font-size:0.9rem;">
         <thead>
             <tr style="text-align:left; border-bottom:1px solid #1f2937;">
                 <th style="padding:0.5rem 0.25rem;">Name</th>
                 <th style="padding:0.5rem 0.25rem;">Blood Group</th>
                 <th style="padding:0.5rem 0.25rem;">City</th>
                 <th style="padding:0.5rem 0.25rem;">Last Donation</th>
+                <th style="padding:0.5rem 0.25rem;">Match</th>
+                <th style="padding:0.5rem 0.25rem;">Score</th>
+                <th style="padding:0.5rem 0.25rem;">Rule Check</th>
+                <th style="padding:0.5rem 0.25rem;">Survey Note</th>
                 <th style="padding:0.5rem 0.25rem;">Status</th>
                 <th style="padding:0.5rem 0.25rem;">Action</th>
             </tr>
         </thead>
-        <tbody>
-            <tr>
-                <td style="padding:0.45rem 0.25rem;">Rohan S.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">Pune</td>
-                <td style="padding:0.45rem 0.25rem;">45 days ago</td>
-                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Rohan S.')">Assign</button>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:0.45rem 0.25rem;">Vikram T.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">Mumbai</td>
-                <td style="padding:0.45rem 0.25rem;">90 days ago</td>
-                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Vikram T.')">Assign</button>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:0.45rem 0.25rem;">Sneha D.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">Nashik</td>
-                <td style="padding:0.45rem 0.25rem;">120 days ago</td>
-                <td style="padding:0.45rem 0.25rem;"><span class="status-badge approved">Available</span></td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-primary btn-sm" onclick="assignDonor(this, 'Sneha D.')">Assign</button>
-                </td>
-            </tr>
-        </tbody>
+        <tbody id="donorsBody"></tbody>
     </table>
+    </div>
+    <p id="donorsStatus" class="text-muted mt-sm"></p>
 </div>
 
 <div class="footer">
@@ -73,15 +80,163 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+var REQUEST_ID = new URLSearchParams(window.location.search).get("request_id");
+var ALL_DONORS = [];
+
 function goHome() { window.location.href = "index.html"; }
 function goAdminRequests() { window.location.href = "admin-requests.html"; }
 
-function assignDonor(btn, name) {
-    alert("Donor " + name + " has been assigned to the request. (placeholder)");
-    btn.disabled = true;
-    btn.textContent = "Assigned";
-    btn.closest("tr").style.opacity = "0.5";
+function renderDonors(items) {
+    var tbody = document.getElementById("donorsBody");
+    if (!Array.isArray(items) || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="padding:0.45rem 0.25rem;">No donors found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = items.map(function(item) {
+        var statusText = String(item.response_status || "PENDING");
+        var assignmentStatus = String(item.assignment_status || "").toLowerCase();
+        var isAlreadyTesting = assignmentStatus === "testing" || assignmentStatus === "selected" || assignmentStatus === "completed" || statusText === "ACCEPTED";
+        var action = isAlreadyTesting
+            ? "Assigned"
+            : '<button class="btn btn-primary btn-sm" onclick="assignDonor(' + item.id + ')">Assign</button>';
+
+        return '<tr>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.name || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.blood_group || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.city || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.last_donation_date || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.match_type || "-") + ' / ' + (item.location_match || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.score != null ? item.score : "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.eligibility_reason || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + (item.survey_note || "-") + '</td>'
+            + '<td style="padding:0.45rem 0.25rem;"><span class="status-badge pending">' + statusText + '</span></td>'
+            + '<td style="padding:0.45rem 0.25rem;">' + action + '</td>'
+            + '</tr>';
+    }).join('');
 }
+
+function parseDateValue(dateString) {
+    if (!dateString) return null;
+    var t = Date.parse(String(dateString) + "T00:00:00");
+    return Number.isNaN(t) ? null : t;
+}
+
+function applyFilters() {
+    var sortField = (document.getElementById("sortField") || { value: "score" }).value;
+    var sortOrder = (document.getElementById("sortOrder") || { value: "desc" }).value;
+    var highestOnly = !!(document.getElementById("highestScoreOnly") && document.getElementById("highestScoreOnly").checked);
+
+    var filtered = ALL_DONORS.slice();
+
+    if (highestOnly && filtered.length > 0) {
+        var maxScore = Math.max.apply(null, filtered.map(function(item) {
+            return Number(item.score || 0);
+        }));
+        filtered = filtered.filter(function(item) {
+            return Number(item.score || 0) === maxScore;
+        });
+    }
+
+    filtered.sort(function(a, b) {
+        var left;
+        var right;
+
+        if (sortField === "last_donation_date") {
+            left = parseDateValue(a.last_donation_date);
+            right = parseDateValue(b.last_donation_date);
+
+            if (left === null && right === null) return 0;
+            if (left === null) return 1;
+            if (right === null) return -1;
+        } else {
+            left = Number(a.score || 0);
+            right = Number(b.score || 0);
+        }
+
+        return sortOrder === "asc" ? (left - right) : (right - left);
+    });
+
+    renderDonors(filtered);
+}
+
+function loadDonors() {
+    if (!REQUEST_ID) {
+        document.getElementById("donorsStatus").textContent = "Missing request_id in URL.";
+        return;
+    }
+
+    var url = API_BASE + "/admin/requests/" + REQUEST_ID + "/donors/";
+
+    document.getElementById("donorsStatus").textContent = "Loading donors...";
+    fetch(url)
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+            if (!result.ok) {
+                document.getElementById("donorsStatus").textContent = result.data && result.data.message ? result.data.message : "Failed to load donors.";
+                return;
+            }
+
+            var payload = result.data || {};
+            document.getElementById("requestMeta").textContent =
+                "Patient: " + (payload.patient_name || "-") +
+                " | Blood: " + (payload.blood_group || "-") +
+                " | Component: " + (payload.component_type || "-") +
+                " | City: " + (payload.city || "-");
+            document.getElementById("requestSpecialNote").textContent =
+                payload.special_note ? ("Special Note: " + payload.special_note) : "Special Note: none";
+
+            document.getElementById("assignmentInfo").textContent =
+                "Assigned/Testing donors: "
+                + String(payload.assigned_count || 0)
+                + " / "
+                + String(payload.max_assignable || 3)
+                + " (hard limit)";
+
+            ALL_DONORS = Array.isArray(payload.donors) ? payload.donors : [];
+            applyFilters();
+            document.getElementById("donorsStatus").textContent = "";
+        })
+        .catch(function() {
+            document.getElementById("donorsStatus").textContent = "Failed to load donors.";
+        });
+}
+
+function assignDonor(donorId) {
+    fetch(API_BASE + "/admin/allocate-donor/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: Number(REQUEST_ID), donor_id: Number(donorId) })
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (!result.ok) {
+            alert(result.data && result.data.message ? result.data.message : "Failed to allocate donor.");
+            return;
+        }
+
+        alert("Donor assigned successfully.");
+        loadDonors();
+    })
+    .catch(function() {
+        alert("Failed to allocate donor.");
+    });
+}
+
+if (localStorage.getItem("userRole") !== "admin") {
+    alert("Unauthorized access!");
+    window.location.href = "login.html";
+}
+
+["sortField", "sortOrder", "highestScoreOnly"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+        el.addEventListener("change", applyFilters);
+    }
+});
+
+loadDonors();
 </script>
 
 </body>

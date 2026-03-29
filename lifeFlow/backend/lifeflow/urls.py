@@ -27,5 +27,6 @@ urlpatterns = [
     path('', include('otp.urls')),
     path('api/', include('inventory.urls')),
     path('api/', include('requests_app.urls')),
+    path('api/', include('donations.urls')),
     path('', home, name='home'),
 ]

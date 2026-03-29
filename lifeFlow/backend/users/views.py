@@ -1,6 +1,7 @@
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from donations.models import DonorSurvey
 from .models import Donor, Hospital, Admin
 
 
@@ -124,5 +125,103 @@ def register_admin(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+def admin_users_list(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'}, status=405)
+
+    try:
+        donors = Donor.objects.all().order_by('-created_at')
+        hospitals = Hospital.objects.all().order_by('-created_at')
+        admins = Admin.objects.all().order_by('-created_at')
+
+        donor_rows = [
+            {
+                'id': item.id,
+                'name': f"{item.first_name} {item.last_name}".strip(),
+                'role': 'Donor',
+                'email': '-',
+                'mobile_number': item.mobile_number,
+                'city': item.city,
+                'status': 'Active' if item.is_active else 'Inactive',
+                'verified': bool(item.is_verified),
+                'created_at': item.created_at.isoformat(),
+            }
+            for item in donors
+        ]
+
+        hospital_rows = [
+            {
+                'id': item.id,
+                'name': item.hospital_name,
+                'role': 'Hospital',
+                'email': item.email or '-',
+                'mobile_number': item.mobile_number,
+                'city': item.city,
+                'status': 'Active' if item.is_active else 'Inactive',
+                'verified': bool(item.is_verified),
+                'created_at': item.created_at.isoformat(),
+            }
+            for item in hospitals
+        ]
+
+        admin_rows = [
+            {
+                'id': item.id,
+                'name': item.full_name,
+                'role': 'Admin',
+                'email': item.email,
+                'mobile_number': item.mobile_number,
+                'city': '-',
+                'status': 'Active' if item.is_active else 'Inactive',
+                'verified': True,
+                'created_at': item.created_at.isoformat(),
+            }
+            for item in admins
+        ]
+
+        all_users = donor_rows + hospital_rows + admin_rows
+        all_users.sort(key=lambda row: row['created_at'], reverse=True)
+
+        return JsonResponse(
+            {
+                'status': 'success',
+                'counts': {
+                    'donors': len(donor_rows),
+                    'hospitals': len(hospital_rows),
+                    'admins': len(admin_rows),
+                    'total': len(all_users),
+                },
+                'data': all_users,
+            },
+            status=200,
+        )
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+def admin_dashboard_summary(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'}, status=405)
+
+    try:
+        donor_total = Donor.objects.count()
+        donor_survey_count = DonorSurvey.objects.values('donor_id').distinct().count()
+
+        return JsonResponse(
+            {
+                'status': 'success',
+                'data': {
+                    'total_donors': donor_total,
+                    'survey_donor_count': donor_survey_count,
+                },
+            },
+            status=200,
+        )
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

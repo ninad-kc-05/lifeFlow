@@ -8,14 +8,66 @@
   <style>
     .inventory-form-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 0.75rem;
       margin-top: 1rem;
       align-items: end;
     }
+    .inventory-form-grid-secondary {
+      grid-template-columns: 1.6fr 1fr auto;
+      margin-top: 0.65rem;
+    }
+    .inventory-entry {
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px solid #d6dee9;
+      border-radius: 0.85rem;
+      background: linear-gradient(180deg, #f8fbff 0%, #f2f7ff 100%);
+      box-shadow: 0 4px 12px rgba(2, 6, 23, 0.05);
+    }
+    .entry-title {
+      margin: 0;
+      font-size: 1rem;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .field-help {
+      font-size: 0.82rem;
+      color: #475569;
+      margin-top: 0.35rem;
+      margin-bottom: 0.25rem;
+    }
+    .add-stock-btn {
+      min-width: 130px;
+      min-height: 46px;
+      font-weight: 700;
+    }
+    .inventory-entry label {
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .inventory-entry input,
+    .inventory-entry select {
+      border: 1px solid #c9d5e6;
+      background: #ffffff;
+      color: #0f172a;
+    }
+    .inventory-entry input:focus,
+    .inventory-entry select:focus {
+      border-color: #14b8a6;
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+      outline: none;
+    }
     @media (max-width: 700px) {
       .inventory-form-grid {
         grid-template-columns: 1fr;
+      }
+      .inventory-form-grid-secondary {
+        grid-template-columns: 1fr;
+      }
+      .add-stock-btn {
+        width: 100%;
       }
     }
     .inline-note {
@@ -47,25 +99,52 @@
       </div>
     </div>
 
-    <div class="inventory-form-grid">
-      <div>
-        <label for="bloodGroup">Blood Group</label>
-        <select id="bloodGroup">
-          <option value="A+">A+</option>
-          <option value="A-">A-</option>
-          <option value="B+">B+</option>
-          <option value="B-">B-</option>
-          <option value="O+">O+</option>
-          <option value="O-">O-</option>
-          <option value="AB+">AB+</option>
-          <option value="AB-">AB-</option>
-        </select>
+    <div class="inventory-entry">
+      <h3 class="entry-title">Add Inventory Entry</h3>
+      <p class="field-help" id="sourceRuleHint">Donation and receiver recovery are fixed to 1 unit.</p>
+
+      <div class="inventory-form-grid">
+        <div>
+          <label for="bloodGroup">Blood Group</label>
+          <select id="bloodGroup">
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+        <div>
+          <label for="componentType">Component</label>
+          <select id="componentType">
+            <option value="whole_blood">Whole Blood</option>
+            <option value="plasma">Plasma</option>
+            <option value="platelets">Platelets</option>
+          </select>
+        </div>
+        <div>
+          <label for="sourceOfBlood">Source</label>
+          <select id="sourceOfBlood">
+            <option value="donation">Donation</option>
+            <option value="camp">Camp</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <label for="units">Units to Add</label>
-        <input id="units" type="number" min="1" placeholder="e.g. 5" />
+
+      <div class="inventory-form-grid inventory-form-grid-secondary">
+        <div>
+          <label for="sourceName" id="sourceNameLabel">Source Name</label>
+          <input id="sourceName" type="text" placeholder="Enter source name" />
+        </div>
+        <div>
+          <label for="units">Units to Add</label>
+          <input id="units" type="number" min="1" placeholder="e.g. 1" />
+        </div>
+        <button class="btn btn-primary add-stock-btn" onclick="addStock()">Add Stock</button>
       </div>
-      <button class="btn btn-primary" onclick="addStock()">Add Stock</button>
     </div>
     <div class="inline-note" id="statusMsg"></div>
 
@@ -73,12 +152,15 @@
       <thead>
         <tr style="text-align:left; border-bottom:1px solid #1f2937;">
           <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+          <th style="padding:0.5rem 0.25rem;">Component</th>
+          <th style="padding:0.5rem 0.25rem;">Source</th>
+          <th style="padding:0.5rem 0.25rem;">Source Name</th>
           <th style="padding:0.5rem 0.25rem;">Units Available</th>
           <th style="padding:0.5rem 0.25rem;">Last Updated</th>
         </tr>
       </thead>
       <tbody id="inventoryRows">
-        <tr><td colspan="3" style="padding:0.65rem 0.25rem;">Loading...</td></tr>
+        <tr><td colspan="6" style="padding:0.65rem 0.25rem;">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -105,7 +187,7 @@
       var total = 0;
 
       if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="padding:0.65rem 0.25rem;">No inventory records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:0.65rem 0.25rem;">No inventory records found.</td></tr>';
         document.getElementById("totalUnits").textContent = "0";
         return;
       }
@@ -115,6 +197,9 @@
         return (
           "<tr>" +
             '<td style="padding:0.45rem 0.25rem;">' + item.blood_group + "</td>" +
+            '<td style="padding:0.45rem 0.25rem;">' + item.component_type + "</td>" +
+            '<td style="padding:0.45rem 0.25rem;">' + item.source_of_blood + "</td>" +
+            '<td style="padding:0.45rem 0.25rem;">' + (item.source_name || "-") + "</td>" +
             '<td style="padding:0.45rem 0.25rem;">' + item.units_available + "</td>" +
             '<td style="padding:0.45rem 0.25rem;">' + formatDateTime(item.last_updated) + "</td>" +
           "</tr>"
@@ -147,8 +232,37 @@
         });
     }
 
+    function updateSourceInputRules() {
+      var source = document.getElementById("sourceOfBlood").value;
+      var sourceNameInput = document.getElementById("sourceName");
+      var sourceNameLabel = document.getElementById("sourceNameLabel");
+      var unitsInput = document.getElementById("units");
+      var sourceRuleHint = document.getElementById("sourceRuleHint");
+
+      sourceNameInput.required = true;
+      sourceNameInput.readOnly = false;
+      unitsInput.removeAttribute("max");
+
+      if (source === "camp") {
+        sourceNameLabel.textContent = "Camp Name";
+        sourceNameInput.placeholder = "Enter camp name";
+        sourceNameInput.value = "";
+        sourceRuleHint.textContent = "Camp source requires a non-empty camp name.";
+      } else {
+        sourceNameLabel.textContent = "Donor Name";
+        sourceNameInput.placeholder = "Enter donor name";
+        sourceNameInput.value = "";
+        unitsInput.value = "1";
+        unitsInput.max = "1";
+        sourceRuleHint.textContent = "Donation is fixed to 1 unit. Donor Name is mandatory.";
+      }
+    }
+
     function addStock() {
       var bloodGroup = document.getElementById("bloodGroup").value;
+      var componentType = document.getElementById("componentType").value;
+      var sourceOfBlood = document.getElementById("sourceOfBlood").value;
+      var sourceName = document.getElementById("sourceName").value.trim();
       var unitsValue = document.getElementById("units").value;
       var units = parseInt(unitsValue, 10);
 
@@ -156,6 +270,26 @@
         setStatus("Please select blood group.", true);
         return;
       }
+      if (!componentType) {
+        setStatus("Please select component type.", true);
+        return;
+      }
+      if (!sourceOfBlood) {
+        setStatus("Please select blood source.", true);
+        return;
+      }
+
+      if (!sourceName) {
+        var sourceLabel = document.getElementById("sourceNameLabel").textContent || "Source Name";
+        setStatus("Please enter " + sourceLabel + ".", true);
+        return;
+      }
+
+      if ((sourceOfBlood === "donation" || sourceOfBlood === "receiver_recovery") && units !== 1) {
+        setStatus("For donation and receiver recovery, units must be exactly 1.", true);
+        return;
+      }
+
       if (!units || units <= 0) {
         setStatus("Units must be greater than 0.", true);
         return;
@@ -164,7 +298,13 @@
       fetch(API_BASE + "/inventory/add/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blood_group: bloodGroup, units: units })
+        body: JSON.stringify({
+          blood_group: bloodGroup,
+          component_type: componentType,
+          source_of_blood: sourceOfBlood,
+          source_name: sourceName,
+          units: units
+        })
       })
         .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
         .then(function(result) {
@@ -172,8 +312,10 @@
             setStatus(result.data && result.data.message ? result.data.message : "Failed to add stock.", true);
             return;
           }
+          document.getElementById("sourceName").value = "";
           document.getElementById("units").value = "";
           setStatus("Stock updated successfully.", false);
+          updateSourceInputRules();
           loadInventory();
         })
         .catch(function() {
@@ -185,6 +327,8 @@
       alert("Unauthorized access!");
       window.location.href = "login.html";
     } else {
+      document.getElementById("sourceOfBlood").addEventListener("change", updateSourceInputRules);
+      updateSourceInputRules();
       loadInventory();
     }
   </script>

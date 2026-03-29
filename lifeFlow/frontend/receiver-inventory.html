@@ -18,35 +18,22 @@
   </div>
 
   <div class="container card-panel card-wide">
-    <h2 class="section-title">Local <span>Inventory</span> (Dummy)</h2>
-    <p class="text-muted mt-sm">Example snapshot of this hospital&#39;s stock.</p>
+    <h2 class="section-title">Local <span>Inventory</span></h2>
+    <p class="text-muted mt-sm">Live snapshot from backend inventory.</p>
 
     <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
       <thead>
         <tr style="text-align:left; border-bottom:1px solid #1f2937;">
           <th style="padding:0.5rem 0.25rem;">Blood Group</th>
+          <th style="padding:0.5rem 0.25rem;">Component</th>
+          <th style="padding:0.5rem 0.25rem;">Source</th>
+          <th style="padding:0.5rem 0.25rem;">Source Name</th>
           <th style="padding:0.5rem 0.25rem;">Available Units</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">O+</td>
-          <td style="padding:0.45rem 0.25rem;">8</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">A+</td>
-          <td style="padding:0.45rem 0.25rem;">6</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">B+</td>
-          <td style="padding:0.45rem 0.25rem;">4</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">AB-</td>
-          <td style="padding:0.45rem 0.25rem;">1</td>
-        </tr>
-      </tbody>
+      <tbody id="inventoryBody"></tbody>
     </table>
+    <p id="inventoryStatus" class="text-muted mt-sm"></p>
   </div>
 
   <div class="footer">
@@ -54,8 +41,45 @@
   </div>
 
   <script>
+    var API_BASE = "http://127.0.0.1:8000/api";
+
     function goHome() { window.location.href = "index.html"; }
     function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
+
+    function loadInventory() {
+      document.getElementById("inventoryStatus").textContent = "Loading inventory...";
+      fetch(API_BASE + "/inventory/")
+        .then(function(res) { return res.json(); })
+        .then(function(items) {
+          var tbody = document.getElementById("inventoryBody");
+          if (!Array.isArray(items) || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:0.5rem 0.25rem;">No inventory records found.</td></tr>';
+            document.getElementById("inventoryStatus").textContent = "";
+            return;
+          }
+
+          tbody.innerHTML = items.map(function(item) {
+            return '<tr>'
+              + '<td style="padding:0.45rem 0.25rem;">' + (item.blood_group || '-') + '</td>'
+              + '<td style="padding:0.45rem 0.25rem;">' + (item.component_type || '-') + '</td>'
+              + '<td style="padding:0.45rem 0.25rem;">' + (item.source_of_blood || '-') + '</td>'
+                + '<td style="padding:0.45rem 0.25rem;">' + (item.source_name || '-') + '</td>'
+              + '<td style="padding:0.45rem 0.25rem;">' + (item.units_available || 0) + '</td>'
+              + '</tr>';
+          }).join('');
+          document.getElementById("inventoryStatus").textContent = "";
+        })
+        .catch(function() {
+          document.getElementById("inventoryStatus").textContent = "Failed to load inventory.";
+        });
+    }
+
+    if (localStorage.getItem("userRole") !== "receiver") {
+      alert("Unauthorized access!");
+      window.location.href = "login.html";
+    }
+
+    loadInventory();
   </script>
 </body>
 </html>

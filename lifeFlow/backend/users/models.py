@@ -48,6 +48,15 @@ class Donor(models.Model):
     # -------------------------
     last_donation_date = models.DateField(null=True, blank=True)
 
+    # Latest computed/recorded health snapshot from donor survey.
+    bmi = models.FloatField(null=True, blank=True)
+    last_systolic_bp = models.IntegerField(null=True, blank=True)
+    last_diastolic_bp = models.IntegerField(null=True, blank=True)
+    last_pulse_rate = models.IntegerField(null=True, blank=True)
+    last_temperature_c = models.FloatField(null=True, blank=True)
+    last_screening_type = models.CharField(max_length=20, blank=True, default="")
+    vitals_recorded_at = models.DateTimeField(null=True, blank=True)
+
     # -------------------------
     # Status
     # -------------------------

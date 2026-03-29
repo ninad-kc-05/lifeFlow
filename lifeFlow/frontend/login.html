@@ -182,6 +182,9 @@ function loginAdmin() {
             localStorage.setItem("userRole", storedRole);
             localStorage.setItem("userEmail", email);
             if (role === "hospital") {
+                if (result.data && result.data.hospital_id) {
+                    localStorage.setItem("hospital_id", String(result.data.hospital_id));
+                }
                 window.location.href = "receiver-dashboard.html";
             } else {
                 window.location.href = "admin-dashboard.html";

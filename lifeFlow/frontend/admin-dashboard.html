@@ -30,19 +30,19 @@
     <div class="cards mt-sm">
         <div class="card">
             <h3>Total Donors</h3>
-            <p class="text-muted">1,248 active donors</p>
+            <p class="text-muted" id="totalDonorsStat">Loading...</p>
         </div>
         <div class="card">
             <h3>Open Requests</h3>
-            <p class="text-muted">18 awaiting approval</p>
+            <p class="text-muted" id="openRequestsStat">Loading...</p>
         </div>
         <div class="card">
             <h3>Units Available</h3>
-            <p class="text-muted">312 units across all hospitals</p>
+            <p class="text-muted" id="unitsAvailableStat">Loading...</p>
         </div>
         <div class="card">
             <h3>Today&#39;s Donations</h3>
-            <p class="text-muted">9 successful donations</p>
+            <p class="text-muted" id="todayDonationsStat">Derived from completed requests</p>
         </div>
     </div>
 
@@ -76,13 +76,8 @@
     <!-- Recent activity list -->
     <div class="card-panel mt-lg">
         <h3>Recent Activity</h3>
-        <p class="text-muted mt-sm">Snapshot of the latest actions in the system (dummy data).</p>
-        <ul class="mt-sm" style="list-style: none; padding-left: 0; font-size: 0.9rem;">
-            <li>• Hospital CityCare created a request for <strong>O+</strong> (2 units).</li>
-            <li>• Donor <strong>Rohan S.</strong> completed a donation at LifeCare Blood Bank.</li>
-            <li>• Inventory updated: <strong>A-</strong> stock increased by 4 units.</li>
-            <li>• New donor <strong>Ananya P.</strong> registered.</li>
-        </ul>
+        <p class="text-muted mt-sm">Latest request activity from backend.</p>
+        <ul id="recentActivityList" class="mt-sm" style="list-style: none; padding-left: 0; font-size: 0.9rem;"></ul>
     </div>
 </div>
 
@@ -92,6 +87,8 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+
 function goHome() {
     window.location.href = "index.html";
 }
@@ -117,11 +114,57 @@ function viewReports() {
     window.location.href = "admin-reports.html";
 }
 
+function loadAdminDashboard() {
+    Promise.all([
+        fetch(API_BASE + "/admin/dashboard-summary/").then(function(r) { return r.json(); }),
+        fetch(API_BASE + "/requests/").then(function(r) { return r.json(); }),
+        fetch(API_BASE + "/inventory/").then(function(r) { return r.json(); })
+    ])
+    .then(function(results) {
+        var summary = results[0] && results[0].data ? results[0].data : {};
+        var requests = Array.isArray(results[1]) ? results[1] : [];
+        var inventory = Array.isArray(results[2]) ? results[2] : [];
+
+        var openCount = requests.filter(function(item) { return String(item.status) === "pending"; }).length;
+        var completedCount = requests.filter(function(item) { return String(item.status) === "completed"; }).length;
+        var totalUnits = inventory.reduce(function(sum, item) {
+            return sum + (parseInt(item.units_available, 10) || 0);
+        }, 0);
+
+        document.getElementById("totalDonorsStat").textContent =
+            String(summary.survey_donor_count || 0)
+            + " survey donors"
+            + " ("
+            + String(summary.total_donors || 0)
+            + " total registered)";
+
+        document.getElementById("openRequestsStat").textContent = openCount + " awaiting approval";
+        document.getElementById("unitsAvailableStat").textContent = totalUnits + " units across inventory";
+        document.getElementById("todayDonationsStat").textContent = completedCount + " completed requests";
+
+        var recent = requests.slice(0, 5);
+        var html = recent.map(function(item) {
+            return '<li>• Request #' + item.id + ' for <strong>' + (item.blood_group || "N/A") + '</strong> (' + (item.units || 0) + ' units) is <strong>' + (item.status || "pending") + '</strong>.</li>';
+        }).join("");
+
+        document.getElementById("recentActivityList").innerHTML = html || '<li>• No request activity yet.</li>';
+    })
+    .catch(function() {
+        document.getElementById("totalDonorsStat").textContent = "Unable to load";
+        document.getElementById("openRequestsStat").textContent = "Unable to load";
+        document.getElementById("unitsAvailableStat").textContent = "Unable to load";
+        document.getElementById("todayDonationsStat").textContent = "Unable to load";
+        document.getElementById("recentActivityList").innerHTML = '<li>• Failed to fetch activity.</li>';
+    });
+}
+
 // Role protection
 if (localStorage.getItem("userRole") !== "admin") {
     alert("Unauthorized access!");
     window.location.href = "login.html";
 }
+
+loadAdminDashboard();
 </script>
 
 </body>

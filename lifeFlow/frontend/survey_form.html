@@ -838,9 +838,76 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         return;
     }
 
-    /* All valid → show success */
-    showEl(okMsg);
-    okMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const donorIdFromUrl = new URLSearchParams(window.location.search).get('donor_id');
+    const donorId = donorIdFromUrl || localStorage.getItem('donor_id') || null;
+    const donorMobile = localStorage.getItem('userPhone') || '';
+
+    const textFromDesc = (name) => {
+        const box = document.querySelector(`[data-desc-for="${name}"]`);
+        if (!box) return '';
+        const area = box.querySelector('textarea');
+        return area ? area.value.trim() : '';
+    };
+
+    const diseases = Array.from(document.querySelectorAll('input[name="disease"]:checked')).map((el) => el.value);
+    const femaleDetails = document.getElementById('femaleDescText');
+
+    const payload = {
+        donor_id: donorId ? Number(donorId) : null,
+        donor_mobile: donorMobile,
+        screening_type: screeningType,
+        weight_kg: Number(document.getElementById('weight').value),
+        height_cm: Number(document.getElementById('height').value),
+        systolic_bp: Number(document.getElementById('systolicBP').value),
+        diastolic_bp: Number(document.getElementById('diastolicBP').value),
+        temperature_c: Number(document.getElementById('temperature').value),
+        pulse_rate: Number(document.getElementById('pulse').value),
+        hemoglobin: screeningType === 'hospital' ? Number(document.getElementById('hemoglobin').value) : null,
+        is_on_medication: getRadio('medication') === 'yes',
+        medication_details: textFromDesc('medication'),
+        had_recent_fever: getRadio('fever') === 'yes',
+        fever_details: textFromDesc('fever'),
+        donated_last_3_months: getRadio('recentDonation') === 'yes',
+        recent_donation_details: textFromDesc('recentDonation'),
+        has_chronic_illness: screeningType === 'camp' && getRadio('chronicIllness') === 'yes',
+        chronic_illness_details: textFromDesc('chronicIllness'),
+        used_steroids: donorGender === 'male' ? getRadio('steroids') === 'yes' : null,
+        steroid_details: textFromDesc('steroids'),
+        had_major_surgery: donorGender === 'male' ? getRadio('surgery') === 'yes' : null,
+        surgery_details: textFromDesc('surgery'),
+        is_pregnant: donorGender === 'female' ? getRadio('pregnant') === 'yes' : null,
+        is_breastfeeding: donorGender === 'female' ? getRadio('breastfeeding') === 'yes' : null,
+        has_heavy_menstruation: donorGender === 'female' ? getRadio('menstruation') === 'yes' : null,
+        recent_delivery_or_miscarriage: donorGender === 'female' ? getRadio('recentDelivery') === 'yes' : null,
+        female_additional_details: femaleDetails ? femaleDetails.value.trim() : '',
+        diseases: diseases,
+        review_notes: 'Submitted from donor screening form',
+    };
+
+    if (!payload.donor_id && !payload.donor_mobile) {
+        errMsg.textContent = 'Donor identity missing. Please login again before submitting survey.';
+        showEl(errMsg);
+        return;
+    }
+
+    fetch('http://127.0.0.1:8000/api/surveys/submit/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    .then((res) => res.json().then((json) => ({ ok: res.ok, json: json })))
+    .then(({ ok, json }) => {
+        if (!ok || json.status !== 'success') {
+            throw new Error(json.message || 'Failed to save survey');
+        }
+        okMsg.textContent = '✓ Survey saved successfully! BMI and eligibility were updated.';
+        showEl(okMsg);
+        okMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    })
+    .catch((err) => {
+        errMsg.textContent = err.message || 'Something went wrong while saving survey.';
+        showEl(errMsg);
+    });
 });
 </script>
 

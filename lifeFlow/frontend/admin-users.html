@@ -17,40 +17,29 @@
     </div>
   </div>
 
-  <div class="container card-panel card-wide">
-    <h2 class="section-title">System <span>Users</span> (Dummy)</h2>
-    <p class="text-muted mt-sm">Static sample data to show how an admin user list could look.</p>
+  <div class="container card-panel card-wide card-table-wide">
+    <h2 class="section-title">System <span>Users</span></h2>
+    <p class="text-muted mt-sm">Live users list from backend.</p>
+    <p id="usersCountInfo" class="text-muted" style="margin-top:0.45rem;"></p>
 
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+    <div style="margin-top:1rem; overflow-x:auto;">
+    <table style="width:100%; min-width:1050px; border-collapse:collapse; font-size:0.9rem;">
       <thead>
         <tr style="text-align:left; border-bottom:1px solid #1f2937;">
+          <th style="padding:0.5rem 0.25rem;">ID</th>
           <th style="padding:0.5rem 0.25rem;">Name</th>
           <th style="padding:0.5rem 0.25rem;">Role</th>
           <th style="padding:0.5rem 0.25rem;">Email</th>
+          <th style="padding:0.5rem 0.25rem;">Mobile</th>
+          <th style="padding:0.5rem 0.25rem;">City</th>
+          <th style="padding:0.5rem 0.25rem;">Verified</th>
           <th style="padding:0.5rem 0.25rem;">Status</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">Rohan S.</td>
-          <td style="padding:0.45rem 0.25rem;">Donor</td>
-          <td style="padding:0.45rem 0.25rem;">rohan@example.com</td>
-          <td style="padding:0.45rem 0.25rem;">Active</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
-          <td style="padding:0.45rem 0.25rem;">Receiver</td>
-          <td style="padding:0.45rem 0.25rem;">info@citycare.in</td>
-          <td style="padding:0.45rem 0.25rem;">Verified</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">Admin User</td>
-          <td style="padding:0.45rem 0.25rem;">Admin</td>
-          <td style="padding:0.45rem 0.25rem;">admin@lifeflow.app</td>
-          <td style="padding:0.45rem 0.25rem;">Active</td>
-        </tr>
-      </tbody>
+      <tbody id="usersBody"></tbody>
     </table>
+    </div>
+    <p id="usersStatus" class="text-muted mt-sm"></p>
   </div>
 
   <div class="footer">
@@ -58,8 +47,63 @@
   </div>
 
   <script>
+    var API_BASE = "http://127.0.0.1:8000/api";
+
     function goHome() { window.location.href = "index.html"; }
     function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
+
+    function renderUsers(items) {
+      var tbody = document.getElementById("usersBody");
+      if (!Array.isArray(items) || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:0.55rem 0.25rem;">No users found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = items.map(function(item) {
+        return '<tr>'
+          + '<td style="padding:0.45rem 0.25rem;">#' + (item.id || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.name || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.role || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.email || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.mobile_number || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.city || '-') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.verified ? 'Yes' : 'No') + '</td>'
+          + '<td style="padding:0.45rem 0.25rem;">' + (item.status || '-') + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function loadUsers() {
+      document.getElementById("usersStatus").textContent = "Loading users...";
+      fetch(API_BASE + "/admin/users/")
+        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+        .then(function(result) {
+          if (!result.ok || result.data.status !== "success") {
+            document.getElementById("usersStatus").textContent = result.data && result.data.message ? result.data.message : "Failed to load users.";
+            return;
+          }
+
+          var counts = result.data.counts || {};
+          document.getElementById("usersCountInfo").textContent =
+            "Total: " + String(counts.total || 0)
+            + " | Donors: " + String(counts.donors || 0)
+            + " | Hospitals: " + String(counts.hospitals || 0)
+            + " | Admins: " + String(counts.admins || 0);
+
+          renderUsers(result.data.data || []);
+          document.getElementById("usersStatus").textContent = "";
+        })
+        .catch(function() {
+          document.getElementById("usersStatus").textContent = "Failed to load users.";
+        });
+    }
+
+    if (localStorage.getItem("userRole") !== "admin") {
+      alert("Unauthorized access!");
+      window.location.href = "login.html";
+    }
+
+    loadUsers();
   </script>
 </body>
 </html>

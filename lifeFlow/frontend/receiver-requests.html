@@ -85,21 +85,25 @@
     }
 
     function statusBadge(status) {
+      if (status === "donor_needed") return '<span class="status-badge pending">Searching for Donors</span>';
+      if (status === "assigned" || status === "allocated") return '<span class="status-badge approved">Assigned</span>';
       if (status === "approved") return '<span class="status-badge approved">Approved</span>';
       if (status === "completed") return '<span class="status-badge completed">Completed</span>';
-      if (status === "cancelled") return '<span class="status-badge" style="background: rgba(239,68,68,0.15); color:#ef4444;">Rejected</span>';
       return '<span class="status-badge pending">Pending</span>';
     }
 
     function actionCell(status) {
+      if (status === "donor_needed") {
+        return '<span class="text-muted" style="font-size:0.8rem; font-weight:600;">Searching for donors</span>';
+      }
+      if (status === "assigned" || status === "allocated") {
+        return '<span style="color:#22c55e; font-weight:600; font-size:0.8rem;">Donor Assigned</span>';
+      }
       if (status === "approved") {
         return '<button class="btn btn-primary btn-sm" onclick="goToAllocatedPatients()">Allocated Patient</button>';
       }
       if (status === "completed") {
         return '<span style="color:#22c55e; font-weight:600; font-size:0.8rem;">Donation Completed</span>';
-      }
-      if (status === "cancelled") {
-        return '<span style="color:#ef4444; font-weight:600; font-size:0.8rem;">Rejected</span>';
       }
       return '<span class="text-muted" style="font-size:0.8rem; font-weight:600;">Pending</span>';
     }
@@ -158,6 +162,10 @@
           if (hospitalId) {
             items = items.filter(function(item) { return String(item.hospital_id) === String(hospitalId); });
           }
+
+          items = items.filter(function(item) {
+            return item.status !== "rejected" && item.status !== "cancelled";
+          });
 
           renderRows(items);
           document.getElementById("statusMsg").textContent = "";

@@ -24,6 +24,9 @@
     <label>Patient Name</label>
     <input id="patientName" type="text" placeholder="Patient name" />
 
+    <label>Patient Age</label>
+    <input id="patientAge" type="number" min="1" max="120" placeholder="Patient age" />
+
     <label>Blood Group</label>
     <select id="bloodGroup">
       <option value="" disabled selected>Select Blood Group</option>
@@ -57,6 +60,9 @@
 
     <label>Required By</label>
     <input id="requiredBy" type="date" />
+
+    <label>Special Note (Optional)</label>
+    <textarea id="specialNote" placeholder="Any eligibility note, urgency detail, or special instruction"></textarea>
 
     <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="submitRequest()">Submit Request</button>
     <p id="statusMsg" class="text-muted mt-sm" style="font-size:0.85rem;"></p>
@@ -92,21 +98,23 @@
       var hospitalId = getHospitalIdFromUrl();
       var payload = {
         patient_name: document.getElementById("patientName").value.trim(),
+        patient_age: parseInt(document.getElementById("patientAge").value, 10) || 0,
         blood_group: document.getElementById("bloodGroup").value,
         component_type: document.getElementById("componentType").value,
-        units: document.getElementById("unitsNeeded").value,
+        units: parseInt(document.getElementById("unitsNeeded").value, 10) || 1,
         urgency: document.getElementById("urgency").value,
         required_by: document.getElementById("requiredBy").value,
-        hospital_id: hospitalId
+        hospital_id: parseInt(hospitalId, 10) || null,
+        special_note: document.getElementById("specialNote").value.trim()
       };
 
       if (!payload.hospital_id) {
-        setStatus("Missing hospital_id in URL.", true);
+        setStatus("Missing hospital_id. Please ensure URL has ?hospital_id=X parameter.", true);
         return;
       }
 
       if (!payload.patient_name || !payload.blood_group || !payload.component_type || !payload.units || !payload.urgency || !payload.required_by) {
-        setStatus("Please fill all fields.", true);
+        setStatus("Please fill all required fields.", true);
         return;
       }
 
@@ -121,9 +129,10 @@
             setStatus(result.data && result.data.message ? result.data.message : "Failed to create request.", true);
             return;
           }
+
           setStatus("Request created successfully.", false);
           alert("Request created successfully.");
-          window.location.href = "receiver-requests.html?hospital_id=" + encodeURIComponent(String(hospitalId));
+          window.location.href = "receiver-requests.html?hospital_id=" + encodeURIComponent(String(payload.hospital_id));
         })
         .catch(function() {
           setStatus("Server error while creating request.", true);

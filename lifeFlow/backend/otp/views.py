@@ -177,4 +177,17 @@ def verify_email_otp(request):
     otp_record.is_verified = True
     otp_record.save()
 
-    return JsonResponse({'status': 'success', 'message': 'OTP verified successfully'})
+    response_payload = {
+        'status': 'success',
+        'message': 'OTP verified successfully',
+        'user_type': otp_record.user_type,
+    }
+
+    if otp_record.user_type == 'hospital':
+        hospital = Hospital.objects.filter(email=email).first()
+        response_payload['hospital_id'] = hospital.id if hospital else None
+    elif otp_record.user_type == 'admin':
+        admin_user = Admin.objects.filter(email=email).first()
+        response_payload['admin_id'] = admin_user.id if admin_user else None
+
+    return JsonResponse(response_payload)

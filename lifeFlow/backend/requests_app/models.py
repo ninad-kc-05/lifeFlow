@@ -10,6 +10,11 @@ class BloodRequest(models.Model):
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('rejected', 'Rejected'),
+        ('donor_needed', 'Donor Needed'),
+        ('assigned', 'Assigned'),
+        # Legacy compatibility
+        ('allocated', 'Allocated'),
         ('approved', 'Approved'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
@@ -51,9 +56,11 @@ class BloodRequest(models.Model):
     address_line = models.TextField()
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=10, blank=True, default="")
+    special_note = models.TextField(blank=True, default="")
 
     status = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=STATUS_CHOICES,
         default='pending'
     )
@@ -68,6 +75,14 @@ from django.db import models
 
 
 class DonorResponse(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('testing', 'Testing'),
+        ('selected', 'Selected'),
+        ('rejected', 'Rejected'),
+        ('completed', 'Completed'),
+    ]
 
     RESPONSE_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -85,6 +100,25 @@ class DonorResponse(models.Model):
         'requests_app.BloodRequest',
         on_delete=models.CASCADE,
         related_name='donor_responses'
+    )
+
+    hospital = models.ForeignKey(
+        'users.Hospital',
+        on_delete=models.CASCADE,
+        related_name='donor_responses',
+        null=True,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    remarks = models.TextField(
+        blank=True,
+        default=''
     )
 
     response_status = models.CharField(

@@ -2,6 +2,12 @@ from django.db import models
 
 
 class DonationRecord(models.Model):
+    COMPONENT_CHOICES = [
+        ('whole_blood', 'Whole Blood'),
+        ('plasma', 'Plasma'),
+        ('platelets', 'Platelets'),
+    ]
+
     DONATION_STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
         ('completed', 'Completed'),
@@ -11,7 +17,9 @@ class DonationRecord(models.Model):
     donor = models.ForeignKey(
         'users.Donor',
         on_delete=models.CASCADE,
-        related_name='donations'
+        related_name='donations',
+        null=True,
+        blank=True,
     )
 
     hospital = models.ForeignKey(
@@ -29,6 +37,11 @@ class DonationRecord(models.Model):
     )
 
     blood_group = models.CharField(max_length=5)
+    component = models.CharField(
+        max_length=20,
+        choices=COMPONENT_CHOICES,
+        default='whole_blood',
+    )
     units_donated = models.PositiveIntegerField()
     donation_date = models.DateField()
 

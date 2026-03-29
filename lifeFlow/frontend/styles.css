@@ -66,6 +66,10 @@ body {
   max-width: 920px;
 }
 
+.card-table-wide {
+  max-width: 1320px;
+}
+
 .section-title {
   font-size: 1.5rem;
   font-weight: 700;

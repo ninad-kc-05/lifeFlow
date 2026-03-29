@@ -15,6 +15,12 @@ class BloodRequest(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    COMPONENT_CHOICES = [
+        ('whole_blood', 'Whole Blood'),
+        ('plasma', 'Plasma'),
+        ('platelets', 'Platelets'),
+    ]
+
     hospital = models.ForeignKey(
         'users.Hospital',
         on_delete=models.CASCADE,
@@ -25,6 +31,11 @@ class BloodRequest(models.Model):
     patient_age = models.PositiveIntegerField()
 
     blood_group = models.CharField(max_length=5)
+    component_type = models.CharField(
+        max_length=20,
+        choices=COMPONENT_CHOICES,
+        default='whole_blood'
+    )
     units_required = models.PositiveIntegerField()
 
     urgency_level = models.CharField(

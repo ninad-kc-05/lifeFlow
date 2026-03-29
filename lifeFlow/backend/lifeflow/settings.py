@@ -34,7 +34,8 @@ INSTALLED_APPS = [
     'requests_app',
     'inventory',
     'core',
-    'otp'
+    'otp',
+    'rest_framework'
 ]
 
 

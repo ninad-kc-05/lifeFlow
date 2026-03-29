@@ -25,5 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('', include('otp.urls')),
+    path('api/', include('inventory.urls')),
+    path('api/', include('requests_app.urls')),
     path('', home, name='home'),
 ]

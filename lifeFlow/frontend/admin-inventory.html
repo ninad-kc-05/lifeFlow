@@ -216,7 +216,8 @@
     &copy; 2025 LifeFlow | Blood Donation Management System
   </div>
 
-  <script>
+  <script src="auth-guard.js"></script>
+<script>
     var API_BASE = "http://127.0.0.1:8000/api";
 
     function goHome() { window.location.href = "index.html"; }
@@ -400,10 +401,11 @@
         });
     }
 
-    if (localStorage.getItem("userRole") !== "admin") {
-      alert("Unauthorized access!");
-      window.location.href = "login.html";
-    } else {
+    if (window.LifeFlowAuth) {
+    window.LifeFlowAuth.enforce();
+} else {
+    window.location.replace("index.html");
+} else {
       document.getElementById("sourceOfBlood").addEventListener("change", updateSourceInputRules);
       updateSourceInputRules();
       loadInventory();
@@ -411,3 +413,6 @@
   </script>
 </body>
 </html>
+
+
+

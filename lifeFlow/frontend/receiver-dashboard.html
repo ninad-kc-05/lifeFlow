@@ -216,11 +216,13 @@
     © 2025 LifeFlow | Blood Donation Management System
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 var API_BASE = "http://127.0.0.1:8000/api";
 
 function goHome() { window.location.href = "index.html"; }
-function logout() { localStorage.clear(); window.location.href = "login.html"; }
+function logout() { localStorage.clear();
+    window.location.replace("index.html"); }
 function getHospitalId() {
     var params = new URLSearchParams(window.location.search);
     var fromUrl = params.get("hospital_id");
@@ -294,9 +296,10 @@ function loadReceiverStats() {
         });
 }
 
-if (localStorage.getItem("userRole") !== "receiver") {
-    alert("Unauthorized access!");
-    window.location.href = "login.html";
+if (window.LifeFlowAuth) {
+    window.LifeFlowAuth.enforce();
+} else {
+    window.location.replace("index.html");
 }
 
 loadReceiverStats();
@@ -304,3 +307,7 @@ loadReceiverStats();
 
 </body>
 </html>
+
+
+
+

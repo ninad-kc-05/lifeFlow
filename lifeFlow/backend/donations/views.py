@@ -204,7 +204,8 @@ class DonorDashboardSummaryView(APIView):
 		total_donations = donations.count()
 		last_donation = donations.first()
 		
-		last_donation_date = last_donation.donation_date if last_donation else None
+		# Prefer actual completed donations; fallback to donor's registration/provided last_donation_date.
+		last_donation_date = last_donation.donation_date if last_donation else donor.last_donation_date
 		
 		current_date = timezone.now().date()
 		days_ago = None
@@ -212,7 +213,7 @@ class DonorDashboardSummaryView(APIView):
 			# Handle potential datetime objects
 			if hasattr(last_donation_date, 'date'):
 				last_donation_date = last_donation_date.date()
-			days_ago = (current_date - last_donation_date).days
+			days_ago = max((current_date - last_donation_date).days, 0)
 		
 		# Eligibility: 120 days gap required for blood donation
 		can_donate = True

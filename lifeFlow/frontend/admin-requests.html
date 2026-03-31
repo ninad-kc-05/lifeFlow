@@ -98,7 +98,8 @@
     © 2025 LifeFlow | Blood Donation Management System
   </div>
 
-  <script>
+  <script src="auth-guard.js"></script>
+<script>
     var API_BASE = "http://127.0.0.1:8000/api";
     var currentTab = 'normal'; // 'normal' or 'urgent'
     var allRequests = [];
@@ -236,12 +237,16 @@
       window.location.href = "available_donors.html?request_id=" + encodeURIComponent(String(id));
     }
 
-    if (localStorage.getItem("userRole") !== "admin") {
-      alert("Unauthorized access!");
-      window.location.href = "login.html";
-    }
+    if (window.LifeFlowAuth) {
+    window.LifeFlowAuth.enforce();
+} else {
+    window.location.replace("index.html");
+}
 
     loadRequests();
   </script>
 </body>
 </html>
+
+
+

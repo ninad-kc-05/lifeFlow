@@ -127,11 +127,13 @@
     © 2025 LifeFlow | Blood Donation Management System
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 var API_BASE = "http://127.0.0.1:8000/api";
 
 function goHome() { window.location.href = "index.html"; }
-function logout() { localStorage.clear(); window.location.href = "login.html"; }
+function logout() { localStorage.clear();
+    window.location.replace("index.html"); }
 function donate() { window.location.href = "survey_form.html"; }
 function viewHistory() { window.location.href = "donor-history.html"; }
 function viewMatchedRequests() { window.location.href = "Donor_gets_request.html"; }
@@ -151,9 +153,10 @@ document.addEventListener('click', function() {
 });
 
 // Role protection
-if (localStorage.getItem("userRole") !== "donor") {
-    alert("Unauthorized access!");
-    window.location.href = "login.html";
+if (window.LifeFlowAuth) {
+    window.LifeFlowAuth.enforce();
+} else {
+    window.location.replace("index.html");
 }
 
 function loadDonorDashboard() {
@@ -286,3 +289,7 @@ loadDonorDashboard();
 
 </body>
 </html>
+
+
+
+

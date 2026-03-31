@@ -178,11 +178,11 @@
     }
 
     if (window.LifeFlowAuth) {
-    window.LifeFlowAuth.enforce();
-} else {
-    window.location.replace("index.html");
-} else {
-      loadRequests();
+      if (window.LifeFlowAuth.enforce()) {
+        loadRequests();
+      }
+    } else {
+      window.location.replace("index.html");
     }
   </script>
 </body>

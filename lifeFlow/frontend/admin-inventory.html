@@ -402,13 +402,13 @@
     }
 
     if (window.LifeFlowAuth) {
-    window.LifeFlowAuth.enforce();
-} else {
-    window.location.replace("index.html");
-} else {
-      document.getElementById("sourceOfBlood").addEventListener("change", updateSourceInputRules);
-      updateSourceInputRules();
-      loadInventory();
+      if (window.LifeFlowAuth.enforce()) {
+        document.getElementById("sourceOfBlood").addEventListener("change", updateSourceInputRules);
+        updateSourceInputRules();
+        loadInventory();
+      }
+    } else {
+      window.location.replace("index.html");
     }
   </script>
 </body>

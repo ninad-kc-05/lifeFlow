@@ -3,17 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LifeFlow – Admin Reports</title>
+  <title>LifeFlow - Admin Reports</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+    .metric-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 0.9rem;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+    .metric-card h3 {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin: 0 0 0.3rem 0;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .metric-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+    }
+    .reports-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 900px) {
+      .reports-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 0.95rem;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    }
+    .chart-title {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .bar-list {
+      margin-top: 0.8rem;
+      display: grid;
+      gap: 0.6rem;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 44px;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .bar-label {
+      font-size: 0.8rem;
+      color: #334155;
+      font-weight: 600;
+    }
+    .bar-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #0ea5e9, #22c55e);
+      width: 0%;
+    }
+    .bar-count {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .ring-wrap {
+      margin-top: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .completion-ring {
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(#16a34a 0deg, #16a34a 0deg, #e2e8f0 0deg 360deg);
+      position: relative;
+    }
+    .completion-ring::after {
+      content: "";
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      position: absolute;
+    }
+    .ring-text {
+      z-index: 1;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .ring-meta {
+      color: #475569;
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+    .inventory-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.8rem;
+      font-size: 0.86rem;
+    }
+    .inventory-table th,
+    .inventory-table td {
+      padding: 0.45rem 0.4rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .inventory-table th {
+      color: #64748b;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .low-pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 0.16rem 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .muted-note {
+      margin-top: 0.55rem;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+  </style>
 </head>
 <body>
   <div class="header">
     <div class="header-top">
-        <div class="logo" onclick="goHome()">
-      <img src="logo.jpeg" alt="LifeFlow" />
-    </div>
-    <div class="nav-links">
-      <button onclick="goAdminDashboard()">Back to Dashboard</button>
+      <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow" />
+      </div>
+      <div class="nav-links">
+        <button onclick="goAdminDashboard()">Back to Dashboard</button>
+      </div>
     </div>
   </div>
 
@@ -21,42 +177,109 @@
     <h2 class="section-title">Analytics &amp; <span>Reports</span></h2>
     <p class="text-muted mt-sm">Live metrics from backend requests and inventory.</p>
 
-    <div class="cards mt-md">
-      <div class="card">
+    <div class="metrics-grid">
+      <div class="metric-card">
         <h3>Total Requests</h3>
-        <p class="text-muted" id="totalRequestsMetric">Loading...</p>
+        <p class="metric-value" id="totalRequestsMetric">Loading...</p>
       </div>
-      <div class="card">
-        <h3>Fulfilled Requests</h3>
-        <p class="text-muted" id="fulfilledRequestsMetric">Loading...</p>
-      </div>
-      <div class="card">
+      <div class="metric-card">
         <h3>Top Requested Group</h3>
-        <p class="text-muted" id="topGroupMetric">Loading...</p>
+        <p class="metric-value" id="topGroupMetric">Loading...</p>
+      </div>
+      <div class="metric-card">
+        <h3>Total Inventory Units</h3>
+        <p class="metric-value" id="totalInventoryMetric">Loading...</p>
       </div>
     </div>
 
-    <div class="card-panel mt-lg">
-      <h3>Requests By Status</h3>
-      <ul id="statusBreakdown" class="mt-sm" style="list-style:none; padding-left:0; line-height:1.8;"></ul>
+    <div class="reports-grid">
+      <div class="chart-card">
+        <h3 class="chart-title">Requests by Status</h3>
+        <div id="statusChart" class="bar-list"></div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Fulfillment Snapshot</h3>
+        <div class="ring-wrap">
+          <div class="completion-ring" id="completionRing">
+            <div class="ring-text" id="completionRateText">0%</div>
+          </div>
+          <div class="ring-meta" id="completionMeta">
+            Completed: 0<br>
+            Approved: 0<br>
+            Pending: 0
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="card-panel mt-lg">
-      <h3>Low Inventory Groups (&lt;= 2 units)</h3>
-      <ul id="lowInventory" class="mt-sm" style="list-style:none; padding-left:0; line-height:1.8;"></ul>
+    <div class="reports-grid">
+      <div class="chart-card">
+        <h3 class="chart-title">Top Requested Blood Groups</h3>
+        <div id="groupChart" class="bar-list"></div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Low Inventory (&lt;= 2 units)</h3>
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Component</th>
+              <th>Units</th>
+            </tr>
+          </thead>
+          <tbody id="lowInventoryRows"></tbody>
+        </table>
+        <p id="lowInventorySummary" class="muted-note"></p>
+      </div>
     </div>
   </div>
 
   <div class="footer">
-    © 2025 LifeFlow | Blood Donation Management System
+    &copy; 2025 LifeFlow | Blood Donation Management System
   </div>
 
   <script src="auth-guard.js"></script>
-<script>
+  <script>
     var API_BASE = "http://127.0.0.1:8000/api";
 
     function goHome() { window.location.href = "index.html"; }
     function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
+
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderBarChart(containerId, rows, emptyText) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        container.innerHTML = '<div class="muted-note">' + escapeHtml(emptyText || "No data") + '</div>';
+        return;
+      }
+
+      var max = Math.max.apply(null, rows.map(function(r) { return Number(r.value || 0); }));
+      max = max > 0 ? max : 1;
+
+      container.innerHTML = rows.map(function(row) {
+        var val = Number(row.value || 0);
+        var pct = Math.max(0, Math.min(100, (val / max) * 100));
+        return (
+          '<div class="bar-row">' +
+            '<div class="bar-label">' + escapeHtml(row.label) + '</div>' +
+            '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(2) + '%;"></div></div>' +
+            '<div class="bar-count">' + val + '</div>' +
+          '</div>'
+        );
+      }).join("");
+    }
 
     function loadReports() {
       Promise.all([
@@ -86,43 +309,77 @@
           }
         });
 
-        document.getElementById("totalRequestsMetric").textContent = requests.length + " total requests";
-        document.getElementById("fulfilledRequestsMetric").textContent = (statusCount.completed + statusCount.approved) + " approved/completed";
-        document.getElementById("topGroupMetric").textContent = topGroup + " with " + topCount + " requests";
+        var totalInventory = inventory.reduce(function(sum, item) {
+          return sum + (parseInt(item.units_available, 10) || 0);
+        }, 0);
 
-        document.getElementById("statusBreakdown").innerHTML =
-          '<li>• Pending: <strong>' + statusCount.pending + '</strong></li>' +
-          '<li>• Searching for Donors: <strong>' + statusCount.donor_needed + '</strong></li>' +
-          '<li>• Assigned: <strong>' + statusCount.assigned + '</strong></li>' +
-          '<li>• Approved: <strong>' + statusCount.approved + '</strong></li>' +
-          '<li>• Completed: <strong>' + statusCount.completed + '</strong></li>';
+        document.getElementById("totalRequestsMetric").textContent = String(requests.length);
+        document.getElementById("topGroupMetric").textContent = topGroup + " with " + topCount + " requests";
+        document.getElementById("totalInventoryMetric").textContent = String(totalInventory);
+
+        renderBarChart("statusChart", [
+          { label: "Pending", value: statusCount.pending },
+          { label: "Donor Needed", value: statusCount.donor_needed },
+          { label: "Assigned", value: statusCount.assigned },
+          { label: "Approved", value: statusCount.approved },
+          { label: "Completed", value: statusCount.completed },
+          { label: "Rejected", value: statusCount.rejected + statusCount.cancelled }
+        ], "No request status data yet.");
+
+        var groupRows = Object.keys(groupCount)
+          .map(function(bg) { return { label: bg, value: groupCount[bg] }; })
+          .sort(function(a, b) { return b.value - a.value; })
+          .slice(0, 6);
+        renderBarChart("groupChart", groupRows, "No blood group request data yet.");
+
+        var completionRate = requests.length ? Math.round((statusCount.completed / requests.length) * 100) : 0;
+        var degree = Math.round((completionRate / 100) * 360);
+        var ring = document.getElementById("completionRing");
+        if (ring) {
+          ring.style.background = "conic-gradient(#16a34a 0deg, #16a34a " + degree + "deg, #e2e8f0 " + degree + "deg 360deg)";
+        }
+        document.getElementById("completionRateText").textContent = completionRate + "%";
+        document.getElementById("completionMeta").innerHTML =
+          "Completed: " + statusCount.completed + "<br>" +
+          "Approved: " + statusCount.approved + "<br>" +
+          "Pending: " + statusCount.pending;
 
         var low = inventory.filter(function(item) { return (parseInt(item.units_available, 10) || 0) <= 2; });
-        document.getElementById("lowInventory").innerHTML = low.length
-          ? low.map(function(item) {
-              return '<li>• ' + item.blood_group + ' (' + item.component_type + '): <strong>' + item.units_available + '</strong> units</li>';
-            }).join('')
-          : '<li>• No low inventory groups right now.</li>';
+        var lowRows = document.getElementById("lowInventoryRows");
+        if (low.length) {
+          lowRows.innerHTML = low.map(function(item) {
+            return (
+              "<tr>" +
+                "<td>" + escapeHtml(item.blood_group) + "</td>" +
+                "<td>" + escapeHtml(item.component_type) + "</td>" +
+                '<td><span class="low-pill">' + (parseInt(item.units_available, 10) || 0) + "</span></td>" +
+              "</tr>"
+            );
+          }).join("");
+          document.getElementById("lowInventorySummary").textContent = low.length + " entries need restock soon.";
+        } else {
+          lowRows.innerHTML = '<tr><td colspan="3" class="muted-note">No low inventory groups right now.</td></tr>';
+          document.getElementById("lowInventorySummary").textContent = "Inventory health looks good.";
+        }
       })
       .catch(function() {
-        document.getElementById("totalRequestsMetric").textContent = "Failed to load";
-        document.getElementById("fulfilledRequestsMetric").textContent = "Failed to load";
-        document.getElementById("topGroupMetric").textContent = "Failed to load";
-        document.getElementById("statusBreakdown").innerHTML = '<li>• Failed to fetch request metrics.</li>';
-        document.getElementById("lowInventory").innerHTML = '<li>• Failed to fetch inventory.</li>';
+        document.getElementById("totalRequestsMetric").textContent = "Failed";
+        document.getElementById("topGroupMetric").textContent = "Failed";
+        document.getElementById("totalInventoryMetric").textContent = "Failed";
+        renderBarChart("statusChart", [], "Failed to fetch request metrics.");
+        renderBarChart("groupChart", [], "Failed to fetch blood group metrics.");
+        document.getElementById("lowInventoryRows").innerHTML = '<tr><td colspan="3" class="muted-note">Failed to fetch inventory.</td></tr>';
+        document.getElementById("lowInventorySummary").textContent = "";
       });
     }
 
     if (window.LifeFlowAuth) {
-    window.LifeFlowAuth.enforce();
-} else {
-    window.location.replace("index.html");
-}
-
-    loadReports();
+      if (window.LifeFlowAuth.enforce()) {
+        loadReports();
+      }
+    } else {
+      window.location.replace("index.html");
+    }
   </script>
 </body>
 </html>
-
-
-

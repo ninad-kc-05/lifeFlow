@@ -2,10 +2,11 @@ from django.db import transaction
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils import timezone
+from datetime import timedelta
 
 from users.models import Donor
-
-from .models import DonorSurvey, SurveyDisease
+from .models import DonorSurvey, SurveyDisease, DonationRecord
 
 
 def _to_bool(value):
@@ -183,3 +184,139 @@ class SubmitDonorSurveyView(APIView):
 			},
 			status=status.HTTP_201_CREATED,
 		)
+
+
+class DonorDashboardSummaryView(APIView):
+	def get(self, request):
+		donor_id = request.query_params.get("donor_id")
+		donor_mobile = request.query_params.get("donor_mobile")
+
+		donor = None
+		if donor_id:
+			donor = Donor.objects.filter(id=donor_id).first()
+		elif donor_mobile:
+			donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+		if not donor:
+			return Response({"status": "error", "message": "Donor not found"}, status=status.HTTP_404_NOT_FOUND)
+
+		donations = DonationRecord.objects.filter(donor=donor, donation_status="completed").order_by("-donation_date")
+		total_donations = donations.count()
+		last_donation = donations.first()
+		
+		last_donation_date = last_donation.donation_date if last_donation else None
+		
+		current_date = timezone.now().date()
+		days_ago = None
+		if last_donation_date:
+			# Handle potential datetime objects
+			if hasattr(last_donation_date, 'date'):
+				last_donation_date = last_donation_date.date()
+			days_ago = (current_date - last_donation_date).days
+		
+		# Eligibility: 120 days gap required for blood donation
+		can_donate = True
+		days_to_wait = 0
+		if last_donation_date:
+			days_since = days_ago
+			if days_since < 120:
+				can_donate = False
+				days_to_wait = 120 - days_since
+
+		# Check latest survey for health eligibility and validity (90 days)
+		latest_survey = DonorSurvey.objects.filter(donor=donor).order_by("-submitted_at").first()
+		
+		survey_valid = True
+		if latest_survey:
+			survey_age = (timezone.now() - latest_survey.submitted_at).days
+			if survey_age > 90:
+				survey_valid = False
+		else:
+			survey_valid = False
+
+		health_eligible = latest_survey.is_eligible if latest_survey and survey_valid else False
+
+		# Overall eligibility includes donor status and survey validity
+		overall_eligible = (can_donate and health_eligible and donor.status == 'active' and survey_valid)
+
+		# Check for active requests/responses
+		from requests_app.models import DonorResponse
+		active_response = DonorResponse.objects.filter(
+			donor=donor,
+			is_active=True,
+			response_status__in=["pending", "accepted"]
+		).first()
+
+		# Check for post-donation screening requirement
+		# If last donation was within 7 days and status is donated/completed
+		needs_post_donation_screening = False
+		latest_screening = None
+		if total_donations > 0 and days_ago is not None and days_ago <= 7:
+			# Get the screening data from the latest successful response
+			screening_response = DonorResponse.objects.filter(
+				donor=donor,
+				status__in=["donated", "completed"]
+			).order_by("-updated_at").first()
+			
+			if screening_response:
+				latest_screening = {
+					"weight": screening_response.weight,
+					"height": screening_response.height,
+					"hospital_name": screening_response.blood_request.hospital.hospital_name if screening_response.blood_request.hospital else "N/A",
+					"date": screening_response.updated_at.date()
+				}
+				# Logic to determine if they've already "acknowledged" this report
+				# For now, let's assume we want them to see it at least once
+				# We can use a simple flag in the response metadata if needed
+
+		return Response({
+			"status": "success",
+			"data": {
+				"first_name": donor.first_name,
+				"last_name": donor.last_name,
+				"total_donations": total_donations,
+				"last_donation_date": last_donation_date,
+				"days_ago": days_ago,
+				"can_donate": overall_eligible,
+				"days_to_wait": days_to_wait,
+				"health_eligible": health_eligible,
+				"survey_valid": survey_valid,
+				"blood_group": donor.blood_group,
+				"donor_status": donor.status,
+				"status_reason": donor.status_reason,
+				"has_active_request": active_response is not None,
+				"active_request_status": active_response.status if active_response else None,
+				"latest_screening": latest_screening
+			}
+		})
+
+
+class DonorDonationHistoryView(APIView):
+	def get(self, request):
+		donor_id = request.query_params.get("donor_id")
+		donor_mobile = request.query_params.get("donor_mobile")
+
+		donor = None
+		if donor_id:
+			donor = Donor.objects.filter(id=donor_id).first()
+		elif donor_mobile:
+			donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+		if not donor:
+			return Response({"status": "error", "message": "Donor not found"}, status=status.HTTP_404_NOT_FOUND)
+
+		donations = DonationRecord.objects.filter(donor=donor).order_by("-donation_date")
+		data = []
+		for d in donations:
+			data.append({
+				"id": d.id,
+				"hospital": d.hospital.hospital_name,
+				"blood_group": d.blood_group,
+				"component": d.component,
+				"units": d.units_donated,
+				"date": d.donation_date,
+				"status": d.donation_status,
+				"remarks": d.remarks
+			})
+
+		return Response({"status": "success", "data": data})

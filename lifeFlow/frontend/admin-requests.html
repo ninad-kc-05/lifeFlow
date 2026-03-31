@@ -5,35 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LifeFlow – Admin Blood Requests</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .tab-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--color-border-subtle);
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .tab-btn:hover {
+      color: var(--color-primary);
+    }
+    .tab-btn.active {
+      color: var(--color-primary);
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -0.65rem;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--color-primary);
+      border-radius: 2px;
+    }
+    .urgency-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .urgency-normal { background: #e2e8f0; color: #475569; }
+    .urgency-urgent { background: #fef3c7; color: #d97706; }
+    .urgency-emergency { background: #fee2e2; color: #dc2626; }
+    
+    .status-badge.completed { background: #dcfce7; color: #16a34a; }
+  </style>
 </head>
 <body>
   <div class="header">
     <div class="header-top">
-        <div class="logo" onclick="goHome()">
-      <img src="logo.jpeg" alt="LifeFlow" />
-    </div>
-    <div class="nav-links">
-      <button onclick="goAdminDashboard()">Back to Dashboard</button>
+      <div class="logo" onclick="goHome()">
+        <img src="logo.jpeg" alt="LifeFlow" />
+      </div>
+      <div class="nav-links">
+        <button onclick="goAdminDashboard()">Back to Dashboard</button>
+      </div>
     </div>
   </div>
 
   <div class="container card-panel card-wide card-table-wide">
     <h2 class="section-title">Blood <span>Requests</span></h2>
-    <p class="text-muted mt-sm">Manage blood requests and search for matching donors.</p>
+    <p class="text-muted mt-sm">Manage blood requests and allocate resources.</p>
 
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
+    <div class="tab-container mt-md">
+      <button class="tab-btn active" id="normalTab" onclick="switchTab('normal')">Normal Requests</button>
+      <button class="tab-btn" id="urgentTab" onclick="switchTab('urgent')">Urgent & Emergency</button>
+    </div>
+
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
       <thead>
-        <tr style="text-align:left; border-bottom:1px solid #1f2937;">
-          <th style="padding:0.5rem 0.25rem;">Request ID</th>
-          <th style="padding:0.5rem 0.25rem;">Hospital ID</th>
-          <th style="padding:0.5rem 0.25rem;">Patient</th>
-          <th style="padding:0.5rem 0.25rem;">Blood</th>
-          <th style="padding:0.5rem 0.25rem;">Units</th>
-          <th style="padding:0.5rem 0.25rem;">Status</th>
-          <th style="padding:0.5rem 0.25rem;">Action</th>
+        <tr style="text-align:left; border-bottom:1px solid #e2e8f0;">
+          <th style="padding:0.75rem 0.5rem;">ID</th>
+          <th style="padding:0.75rem 0.5rem;">Hospital</th>
+          <th style="padding:0.75rem 0.5rem;">Patient</th>
+          <th style="padding:0.75rem 0.5rem;">Blood / Component</th>
+          <th style="padding:0.75rem 0.5rem;">Units</th>
+          <th style="padding:0.75rem 0.5rem;">Status</th>
+          <th style="padding:0.75rem 0.5rem;">Action</th>
         </tr>
       </thead>
-      <tbody id="requestsBody"></tbody>
+      <tbody id="requestsBody">
+        <tr><td colspan="7" style="text-align:center; padding:2rem; color:#64748b;">Loading requests...</td></tr>
+      </tbody>
     </table>
     <p id="requestsStatus" class="text-muted mt-sm"></p>
   </div>
@@ -44,11 +100,21 @@
 
   <script>
     var API_BASE = "http://127.0.0.1:8000/api";
+    var currentTab = 'normal'; // 'normal' or 'urgent'
+    var allRequests = [];
 
     function goHome() { window.location.href = "index.html"; }
     function goAdminDashboard() { window.location.href = "admin-dashboard.html"; }
 
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('normalTab').classList.toggle('active', tab === 'normal');
+      document.getElementById('urgentTab').classList.toggle('active', tab === 'urgent');
+      renderRequests(allRequests);
+    }
+
     function badgeClass(status) {
+      status = String(status).toUpperCase();
       if (status === "ASSIGNED" || status === "ALLOCATED") return "approved";
       if (status === "COMPLETED") return "completed";
       return "pending";
@@ -56,52 +122,69 @@
 
     function renderRequests(items) {
       var tbody = document.getElementById("requestsBody");
-      if (!Array.isArray(items) || items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding:0.6rem 0.25rem;">No requests found.</td></tr>';
-        return;
-      }
+      
+      // Filter by urgency based on tab
+      var filtered = items.filter(function(item) {
+        var urgency = String(item.urgency_level || "normal").toLowerCase();
+        if (currentTab === 'normal') {
+          return urgency === 'normal';
+        } else {
+          return urgency === 'urgent' || urgency === 'emergency';
+        }
+      });
 
-      items = items.filter(function(item) {
+      // Filter out rejected/cancelled
+      filtered = filtered.filter(function(item) {
         var statusText = String(item.status || "").toUpperCase();
         return statusText !== "REJECTED" && statusText !== "CANCELLED";
       });
 
-      if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding:0.6rem 0.25rem;">No active requests found.</td></tr>';
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No ' + currentTab + ' requests found.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = items.map(function(item) {
+      tbody.innerHTML = filtered.map(function(item) {
         var statusText = String(item.status || "PENDING");
+        var urgency = String(item.urgency_level || "normal").toLowerCase();
         var badge = '<span class="status-badge ' + badgeClass(statusText) + '">' + statusText + '</span>';
+        var urgencyBadge = '<span class="urgency-badge urgency-' + urgency + '">' + urgency + '</span>';
 
         var action = '-';
         if (statusText === "PENDING") {
           action = '<button class="btn btn-primary btn-sm" onclick="markAsRead(' + item.id + ')">Mark as Read</button>';
         } else if (statusText === "DONOR_NEEDED") {
-          action = '<button class="btn btn-primary btn-sm" onclick="searchDonor(' + item.id + ')">Search for Donor</button>';
+          if (urgency === 'normal') {
+            action = '<button class="btn btn-primary btn-sm" onclick="searchDonor(' + item.id + ')">Assign Donor</button>';
+          } else {
+            // Urgent/Emergency: Direct allot from inventory
+            action = '<button class="btn btn-primary btn-sm" style="background:#10b981; border:none;" onclick="allotInventory(' + item.id + ')">Allot from Inventory</button>';
+          }
         } else if (statusText === "ASSIGNED" || statusText === "ALLOCATED") {
-          action = 'Donor assigned';
+          action = '<span style="color:#64748b; font-size:0.85rem;">Donor Assigned</span>';
+        } else if (statusText === "COMPLETED") {
+          action = '<span style="color:#16a34a; font-size:0.85rem;">✓ Fulfilled</span>';
         }
 
-        return '<tr>'
-          + '<td style="padding:0.45rem 0.25rem;">#' + item.id + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + (item.hospital_id || "-") + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + (item.patient_name || "-") + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + (item.blood_group || "-") + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + (item.units || 0) + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + badge + '</td>'
-          + '<td style="padding:0.45rem 0.25rem;">' + action + '</td>'
+        return '<tr style="border-bottom: 1px solid #f1f5f9;">'
+          + '<td style="padding:1rem 0.5rem; font-weight:600;">#' + item.id + '</td>'
+          + '<td style="padding:1rem 0.5rem;">' + (item.hospital_name || item.hospital_id || "-") + '</td>'
+          + '<td style="padding:1rem 0.5rem;">' + (item.patient_name || "-") + '</td>'
+          + '<td style="padding:1rem 0.5rem;">' + (item.blood_group || "-") + ' (' + (item.component_type || "Whole Blood") + ') ' + urgencyBadge + '</td>'
+          + '<td style="padding:1rem 0.5rem; font-weight:600;">' + (item.units_required || item.units || 0) + '</td>'
+          + '<td style="padding:1rem 0.5rem;">' + badge + '</td>'
+          + '<td style="padding:1rem 0.5rem;">' + action + '</td>'
           + '</tr>';
       }).join('');
     }
 
     function loadRequests() {
-      document.getElementById("requestsStatus").textContent = "Loading requests...";
+      document.getElementById("requestsStatus").textContent = "Updating list...";
       fetch(API_BASE + "/admin/requests/")
         .then(function(res) { return res.json(); })
         .then(function(items) {
-          renderRequests(items);
+          allRequests = items;
+          renderRequests(allRequests);
           document.getElementById("requestsStatus").textContent = "";
         })
         .catch(function() {
@@ -109,41 +192,48 @@
         });
     }
 
+    function allotInventory(id) {
+      if (!confirm("Are you sure you want to allot units from inventory? This will deduct from current stock and complete the request immediately.")) return;
+      
+      fetch(API_BASE + "/admin/requests/" + id + "/allot-inventory/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(result) {
+        if (!result.ok) {
+          alert(result.data && result.data.message ? result.data.message : "Failed to allot from inventory");
+          return;
+        }
+        alert("Success: Units allotted from inventory.");
+        loadRequests();
+      })
+      .catch(function() {
+        alert("Server error during inventory allotment.");
+      });
+    }
+
     function markAsRead(id) {
       fetch(API_BASE + "/admin/requests/" + id + "/mark-read/", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       })
-        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
-        .then(function(result) {
-          if (!result.ok) {
-            alert(result.data && result.data.message ? result.data.message : "Failed to mark as read");
-            return;
-          }
-          loadRequests();
-        })
-        .catch(function() {
-          alert("Failed to mark as read");
-        });
+      .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+      .then(function(result) {
+        if (!result.ok) {
+          alert(result.data && result.data.message ? result.data.message : "Failed to mark as read");
+          return;
+        }
+        loadRequests();
+      })
+      .catch(function() {
+        alert("Failed to mark as read");
+      });
     }
 
     function searchDonor(id) {
-      fetch(API_BASE + "/admin/requests/" + id + "/search-donor/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      })
-        .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
-        .then(function(result) {
-          if (!result.ok) {
-            alert(result.data && result.data.message ? result.data.message : "Failed to search donor");
-            return;
-          }
-
-          window.location.href = "available_donors.html?request_id=" + encodeURIComponent(String(id));
-        })
-        .catch(function() {
-          alert("Failed to search donor");
-        });
+      // Direct assignment workflow for normal requests
+      window.location.href = "available_donors.html?request_id=" + encodeURIComponent(String(id));
     }
 
     if (localStorage.getItem("userRole") !== "admin") {

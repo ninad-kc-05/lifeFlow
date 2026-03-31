@@ -60,6 +60,15 @@ class Donor(models.Model):
     # -------------------------
     # Status
     # -------------------------
+    STATUS_CHOICES = (
+        ('active', 'Active & Available'),
+        ('unavailable', 'Temporarily Unavailable'),
+        ('medical', 'Medical Hold'),
+        ('inactive', 'Inactive'),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    status_reason = models.TextField(blank=True, default="")
+    
     is_available = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

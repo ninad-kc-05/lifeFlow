@@ -23,8 +23,11 @@ def _normalize_component(component: str) -> str:
 
 def _split_group(blood_group: str):
     group = str(blood_group or "").strip().upper()
-    if len(group) < 2:
+    if not group:
         return "", "+"
+    # Handle cases like "O POSITIVE" or "O+"
+    if "POS" in group: return group.split(" ")[0], "+"
+    if "NEG" in group: return group.split(" ")[0], "-"
     if group[-1] in ["+", "-"]:
         return group[:-1], group[-1]
     return group, "+"
@@ -57,6 +60,11 @@ def _has_recent_vitals(donor: Donor):
 
 
 def _profile_for_donor(donor: Donor):
+    # Try to get BMI directly from donor first (it's saved there after survey)
+    if donor.bmi is not None:
+        age = _age_from_dob(donor.date_of_birth)
+        return DonorProfile(donor=donor, bmi=float(donor.bmi), weight=55.0, age=age) # Default weight if only BMI exists
+
     survey = _latest_survey(donor)
     if not survey or not survey.weight_kg or not survey.height_cm:
         return None
@@ -66,8 +74,7 @@ def _profile_for_donor(donor: Donor):
         return None
 
     weight = float(survey.weight_kg)
-    computed_bmi = weight / (height_m * height_m)
-    bmi = float(donor.bmi) if donor.bmi is not None else computed_bmi
+    bmi = weight / (height_m * height_m)
     age = _age_from_dob(donor.date_of_birth)
     return DonorProfile(donor=donor, bmi=bmi, weight=weight, age=age)
 
@@ -100,8 +107,13 @@ def is_compatible(donor_group, recipient_group, component):
 
 def is_eligible(donor):
     profile = _profile_for_donor(donor)
-    if profile is None:
-        return False, "missing survey height/weight"
+    # If no profile (no survey/BMI), we'll still allow matching but with lower score
+    # if profile is None:
+    #     return False, "missing survey height/weight"
+
+    # Only 'active' status is eligible for matching
+    if donor.status != 'active':
+        return False, f"donor status is {donor.status}"
 
     if not donor.is_available:
         return False, "donor unavailable"
@@ -109,28 +121,32 @@ def is_eligible(donor):
     if not donor.is_active:
         return False, "donor inactive"
 
-    if profile.age < 18 or profile.age > 65:
+    # if not donor.is_verified:
+    #     return False, "donor not verified"
+
+    age = _age_from_dob(donor.date_of_birth)
+    if age < 18 or age > 65:
         return False, "age out of range"
 
-    if profile.weight < 50:
-        return False, "weight below minimum"
+    if profile:
+        if profile.weight < 50:
+            return False, "weight below minimum"
 
-    if profile.bmi < 18.5 or profile.bmi > 29.9:
-        return False, "bmi out of range"
+        if profile.bmi < 18.5 or profile.bmi > 29.9:
+            return False, "bmi out of range"
 
     if donor.last_donation_date:
         days_since = (timezone.now().date() - donor.last_donation_date).days
         if days_since < 120:
-            return False, "donated within 120 days"
+            return False, f"donated recently ({days_since} days ago)"
 
     return True, "all eligibility rules passed"
 
 
 def calculate_score(donor, blood_request):
     profile = _profile_for_donor(donor)
-    if profile is None:
-        return 0
-
+    # score = 0 if profile is None else 0 # Start at 0
+    
     score = 0
 
     if str(donor.blood_group or "").upper() == str(blood_request.blood_group or "").upper():
@@ -145,14 +161,17 @@ def calculate_score(donor, blood_request):
     elif str(donor.city or "").strip().lower() == str(blood_request.city or "").strip().lower():
         score += 20
 
-    if 18.5 <= profile.bmi <= 24.9:
-        score += 20
-    elif 25.0 <= profile.bmi <= 29.9:
-        score += 10
+    if profile:
+        if 18.5 <= profile.bmi <= 24.9:
+            score += 20
+        elif 25.0 <= profile.bmi <= 29.9:
+            score += 10
 
     if donor.last_donation_date:
         days_since = (timezone.now().date() - donor.last_donation_date).days
         if days_since > 180:
+            score += 15
+        elif days_since >= 120:
             score += 10
     else:
         # Never donated donors get the availability freshness bonus.
@@ -178,22 +197,29 @@ def match_donors(request_id):
 
     matches = []
     for donor in donors:
+        # Debugging donor matching
+        print(f"[DEBUG] Matching donor {donor.id} ({donor.blood_group}) in {donor.city}/{donor.pincode}")
+        
         same_pincode = str(donor.pincode or "").strip() == str(blood_request.pincode or "").strip()
         same_city = str(donor.city or "").strip().lower() == str(blood_request.city or "").strip().lower()
 
         # Location filter is mandatory: first same pincode, otherwise same city.
         if not same_pincode and not same_city:
+            print(f"[DEBUG] Donor {donor.id} failed location check")
             continue
 
         if not is_compatible(donor.blood_group, blood_request.blood_group, blood_request.component_type):
+            print(f"[DEBUG] Donor {donor.id} failed compatibility check")
             continue
 
         eligible, reason = is_eligible(donor)
         if not eligible:
+            print(f"[DEBUG] Donor {donor.id} failed eligibility: {reason}")
             continue
 
         score = calculate_score(donor, blood_request)
         if score <= 0:
+            print(f"[DEBUG] Donor {donor.id} score is 0")
             continue
 
         profile = _profile_for_donor(donor)
@@ -201,9 +227,9 @@ def match_donors(request_id):
             {
                 "donor": donor,
                 "score": score,
-                "bmi": round(profile.bmi, 2),
-                "age": profile.age,
-                "weight": profile.weight,
+                "bmi": round(profile.bmi, 2) if profile else "N/A",
+                "age": _age_from_dob(donor.date_of_birth),
+                "weight": profile.weight if profile else "N/A",
                 "location_priority": (
                     "pincode"
                     if str(donor.pincode or "").strip() == str(blood_request.pincode or "").strip()

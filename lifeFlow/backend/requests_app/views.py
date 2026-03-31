@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import status
@@ -282,6 +283,50 @@ class AdminRejectRequestView(APIView):
         return Response(payload, status=status.HTTP_200_OK)
 
 
+class AdminInventoryAllotView(APIView):
+    def post(self, request, id):
+        try:
+            blood_request = BloodRequest.objects.get(id=id)
+        except BloodRequest.DoesNotExist:
+            return Response({"message": "request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Removed strict urgency check to allow fallback allotment when no donors are found
+        # if blood_request.urgency_level not in ["urgent", "emergency"]:
+        #     ...
+
+        from inventory.models import BloodInventory
+
+        # Try to find inventory matching blood group and component
+        # We look for ANY source that has enough units
+        inventory_items = BloodInventory.objects.filter(
+            blood_group=blood_request.blood_group,
+            component_type=blood_request.component_type,
+            units_available__gte=blood_request.units_required,
+        ).order_by("-units_available")
+
+        if not inventory_items.exists():
+            return Response(
+                {"message": f"Insufficient inventory for {blood_request.blood_group} {blood_request.component_type}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Use the first available item
+        item = inventory_items.first()
+        item.units_available -= blood_request.units_required
+        item.save(update_fields=["units_available", "last_updated"])
+
+        blood_request.status = "completed"
+        blood_request.save(update_fields=["status", "updated_at"])
+
+        # Create a donation record for tracking (without donor)
+        _create_donation_record(blood_request, donor=None)
+
+        return Response(
+            {"message": "Units allotted from inventory and request completed", "status": "COMPLETED"},
+            status=status.HTTP_200_OK,
+        )
+
+
 class AdminSearchDonorView(APIView):
     def post(self, request, id):
         try:
@@ -342,6 +387,18 @@ class AdminRequestDonorsView(APIView):
         response_filter = str(request.query_params.get("response_status") or "").strip().upper()
 
         responses = DonorResponse.objects.filter(blood_request=blood_request, is_active=True).select_related("donor")
+
+        # Automatically trigger matching if no donors found yet
+        if not responses.exists():
+            donor_rows = match_donors(blood_request.id)
+            for row in donor_rows:
+                donor = row["donor"]
+                DonorResponse.objects.get_or_create(
+                    donor=donor,
+                    blood_request=blood_request,
+                    defaults={"response_status": "pending", "is_active": True},
+                )
+            responses = DonorResponse.objects.filter(blood_request=blood_request, is_active=True).select_related("donor")
 
         if response_filter in {"PENDING", "ACCEPTED", "DECLINED"}:
             responses = responses.filter(response_status=response_filter.lower())
@@ -493,11 +550,12 @@ class DonorRespondView(APIView):
     def post(self, request):
         request_id = request.data.get("request_id")
         donor_id = request.data.get("donor_id")
+        donor_mobile = request.data.get("donor_mobile")
         response_value = str(request.data.get("response") or "").strip().upper()
 
-        if not request_id or not donor_id or response_value not in ("ACCEPTED", "DECLINED"):
+        if not request_id or (not donor_id and not donor_mobile) or response_value not in ("ACCEPTED", "DECLINED"):
             return Response(
-                {"message": "request_id, donor_id and response(ACCEPTED/DECLINED) are required"},
+                {"message": "request_id, donor_id/donor_mobile and response(ACCEPTED/DECLINED) are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -506,31 +564,51 @@ class DonorRespondView(APIView):
         except BloodRequest.DoesNotExist:
             return Response({"message": "request not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            donor = Donor.objects.get(id=donor_id)
-        except Donor.DoesNotExist:
+        donor = None
+        if donor_id:
+            donor = Donor.objects.filter(id=donor_id).first()
+        elif donor_mobile:
+            donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+        if not donor:
             return Response({"message": "donor not found"}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             donor_response = DonorResponse.objects.get(donor=donor, blood_request=blood_request)
+            # Protection: cannot change response if already accepted or further in the cycle
+            if donor_response.response_status == "accepted" and response_value == "DECLINED":
+                return Response({"message": "Cannot decline a request after it has been accepted"}, status=status.HTTP_400_BAD_REQUEST)
         except DonorResponse.DoesNotExist:
             return Response({"message": "donor response not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if response_value == "ACCEPTED":
-            donor_response.response_status = "accepted"
-            donor_response.save(update_fields=["response_status", "updated_at"])
+            # Extract screening data from request body
+            donor_response.weight = request.data.get("weight")
+            donor_response.height = request.data.get("height")
 
-            blood_request.status = "completed"
+            donor_response.response_status = "accepted"
+            donor_response.status = "accepted"
+            donor_response.save(update_fields=[
+                "response_status", "status", "updated_at",
+                "weight", "height"
+            ])
+
+            blood_request.status = "donor_accepted"
             blood_request.save(update_fields=["status", "updated_at"])
-            _create_donation_record(blood_request, donor=donor)
 
             return Response(
-                {"request_id": blood_request.id, "donor_id": donor.id, "status": "COMPLETED"},
+                {"request_id": blood_request.id, "donor_id": donor.id, "status": "DONOR_ACCEPTED"},
                 status=status.HTTP_200_OK,
             )
 
         donor_response.response_status = "declined"
-        donor_response.save(update_fields=["response_status", "updated_at"])
+        donor_response.status = "rejected" # Update internal status too
+        donor_response.save(update_fields=["response_status", "status", "updated_at"])
+
+        # Restore donor availability if they were scheduled
+        if not donor.is_available:
+            donor.is_available = True
+            donor.save(update_fields=["is_available", "updated_at"])
 
         accepted_exists = DonorResponse.objects.filter(
             blood_request=blood_request,
@@ -596,6 +674,81 @@ class AssignTopDonorsView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
+class DonorActiveRequestView(APIView):
+    def get(self, request):
+        donor_id = request.query_params.get("donor_id")
+        donor_mobile = request.query_params.get("donor_mobile")
+
+        donor = None
+        if donor_id:
+            donor = Donor.objects.filter(id=donor_id).first()
+        elif donor_mobile:
+            donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+        if donor is None:
+            return Response({"message": "Valid donor_id or donor_mobile is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the latest active request for this donor
+        active_response = DonorResponse.objects.filter(
+            donor=donor,
+            is_active=True,
+            response_status__in=["pending", "accepted"]
+        ).select_related("blood_request", "blood_request__hospital").first()
+
+        if not active_response:
+            return Response({"message": "No active requests found", "request": None}, status=status.HTTP_200_OK)
+
+        blood_request = active_response.blood_request
+        hospital = blood_request.hospital
+
+        return Response({
+            "request": {
+                "request_id": blood_request.id,
+                "hospital_name": hospital.hospital_name if hospital else "Unknown Hospital",
+                "patient_name": blood_request.patient_name,
+                "blood_group": blood_request.blood_group,
+                "units_needed": blood_request.units_required,
+                "urgency": blood_request.urgency_level,
+                "city": blood_request.city,
+                "address": blood_request.address_line,
+                "status": active_response.status,
+                "active_request_status": active_response.status,
+                "scheduled_date": str(active_response.scheduled_date) if active_response.scheduled_date else None,
+                "donor_gender": donor.gender
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class DonorAcceptScheduleView(APIView):
+    def post(self, request):
+        request_id = request.data.get("request_id")
+        donor_id = request.data.get("donor_id")
+        donor_mobile = request.data.get("donor_mobile")
+
+        donor = None
+        if donor_id:
+            donor = Donor.objects.filter(id=donor_id).first()
+        elif donor_mobile:
+            donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+        if donor is None or not request_id:
+            return Response({"message": "Valid donor identification and request_id are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            donor_response = DonorResponse.objects.get(donor=donor, blood_request_id=request_id, status="scheduled")
+        except DonorResponse.DoesNotExist:
+            return Response({"message": "No scheduled request found for this donor"}, status=status.HTTP_404_NOT_FOUND)
+
+        donor_response.status = "schedule_accepted"
+        donor_response.save(update_fields=["status", "updated_at"])
+
+        blood_request = donor_response.blood_request
+        blood_request.status = "schedule_accepted"
+        blood_request.save(update_fields=["status", "updated_at"])
+
+        return Response({"message": "Schedule accepted by donor", "status": "SCHEDULE_ACCEPTED"}, status=status.HTTP_200_OK)
+
+
 class HospitalSelectDonorView(APIView):
     def post(self, request):
         donor_response_id = request.data.get("donor_response_id")
@@ -619,20 +772,185 @@ class CompleteDonationView(APIView):
     def post(self, request):
         request_id = request.data.get("request_id")
         donor_id = request.data.get("donor_id")
+        response_id = request.data.get("response_id")
 
-        if not request_id or not donor_id:
+        if not response_id and (not request_id or not donor_id):
             return Response(
-                {"message": "request_id and donor_id are required"},
+                {"message": "response_id or (request_id and donor_id) are required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            result = complete_donation(request_id=request_id, donor_id=donor_id)
-        except BloodRequest.DoesNotExist:
-            return Response({"message": "request not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Donor.DoesNotExist:
-            return Response({"message": "donor not found"}, status=status.HTTP_404_NOT_FOUND)
-        except ValueError as exc:
-            return Response({"message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            if response_id:
+                donor_response = DonorResponse.objects.get(id=response_id)
+                blood_request = donor_response.blood_request
+                donor = donor_response.donor
+            else:
+                blood_request = BloodRequest.objects.get(id=request_id)
+                donor = Donor.objects.get(id=donor_id)
+                donor_response = DonorResponse.objects.get(donor=donor, blood_request=blood_request)
+        except (BloodRequest.DoesNotExist, Donor.DoesNotExist, DonorResponse.DoesNotExist):
+            return Response({"message": "request, donor, or response not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response(result, status=status.HTTP_200_OK)
+        # Mark as donated/completed
+        donor_response.status = "donated"
+        donor_response.save(update_fields=["status", "updated_at"])
+
+        blood_request.status = "completed"
+        blood_request.save(update_fields=["status", "updated_at"])
+
+        # Update donor's last donation date
+        donor.last_donation_date = timezone.now().date()
+        donor.is_available = True
+        donor.save(update_fields=["last_donation_date", "is_available", "updated_at"])
+
+        # Create the actual donation record
+        _create_donation_record(blood_request, donor=donor)
+
+        return Response({"message": "Donation completed successfully", "status": "COMPLETED"}, status=status.HTTP_200_OK)
+
+
+class HospitalReturnToInventoryView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        request_id = request.data.get("request_id")
+        response_id = request.data.get("response_id")
+        
+        if not request_id and not response_id:
+            return Response({"message": "request_id or response_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if response_id:
+                donor_response = DonorResponse.objects.get(id=response_id)
+                blood_request = donor_response.blood_request
+            else:
+                blood_request = BloodRequest.objects.get(id=request_id)
+                # If only request_id provided, we look for all 'donated' records for this request
+                # This is for backward compatibility or bulk return
+        except (BloodRequest.DoesNotExist, DonorResponse.DoesNotExist):
+            return Response({"message": "request or response not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        from inventory.models import BloodInventory
+
+        # Logic for returning specific donor response
+        if response_id:
+            # Check if this specific response was already returned
+            if DonationRecord.objects.filter(blood_request=blood_request, donor=donor_response.donor, donation_status="returned").exists():
+                return Response({"message": "Units for this donor already returned to inventory"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update inventory (assume 1 unit/bag per donor as per previous requirement)
+            inv_item, _ = BloodInventory.objects.get_or_create(
+                blood_group=blood_request.blood_group,
+                component_type=blood_request.component_type,
+                source_of_blood="receiver_recovery",
+                defaults={"units_available": 0, "source_name": f"Return from Request #{blood_request.id} (Donor {donor_response.donor.id})"}
+            )
+            inv_item.units_available += 1 # 1 bag
+            inv_item.save(update_fields=["units_available", "last_updated"])
+
+            # Update donation record status
+            DonationRecord.objects.filter(blood_request=blood_request, donor=donor_response.donor).update(
+                donation_status="returned",
+                remarks=f"Patient recovered. Units returned to inventory on {timezone.now().date()}."
+            )
+            
+            # Deactivate this response
+            donor_response.is_active = False
+            donor_response.save(update_fields=["is_active", "updated_at"])
+        else:
+            # Bulk return for all donors of this request (legacy/fallback)
+            donations = DonationRecord.objects.filter(blood_request=blood_request, donation_status="completed")
+            units_to_return = donations.count() # Number of bags
+            
+            if units_to_return == 0:
+                return Response({"message": "No completed donations found to return"}, status=status.HTTP_400_BAD_REQUEST)
+
+            inv_item, _ = BloodInventory.objects.get_or_create(
+                blood_group=blood_request.blood_group,
+                component_type=blood_request.component_type,
+                source_of_blood="receiver_recovery",
+                defaults={"units_available": 0, "source_name": f"Bulk Return Request #{blood_request.id}"}
+            )
+            inv_item.units_available += units_to_return
+            inv_item.save(update_fields=["units_available", "last_updated"])
+
+            donations.update(
+                donation_status="returned",
+                remarks=f"Bulk Return: Patient recovered. Returned on {timezone.now().date()}."
+            )
+            DonorResponse.objects.filter(blood_request=blood_request).update(is_active=False)
+
+        # Check if all units for the request are handled
+        total_donated = DonationRecord.objects.filter(blood_request=blood_request, donation_status="completed").count()
+        if total_donated >= blood_request.units_required:
+            blood_request.status = "completed"
+        
+        blood_request.special_note = (blood_request.special_note or "") + f" [UNITS RETURNED TO INVENTORY ON {timezone.now().date()}]"
+        blood_request.save(update_fields=["special_note", "updated_at", "status"])
+
+        return Response({"message": "Units successfully returned to inventory", "status": "RETURNED"}, status=status.HTTP_200_OK)
+
+
+class HospitalAcceptedDonorsView(APIView):
+    def get(self, request):
+        hospital_id = request.query_params.get("hospital_id")
+        if not hospital_id:
+            return Response({"message": "hospital_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get all active donor responses for this hospital where donor has accepted
+        responses = DonorResponse.objects.filter(
+            blood_request__hospital_id=hospital_id,
+            is_active=True,
+            response_status="accepted"
+        ).select_related("donor", "blood_request").order_by("-updated_at")
+
+        data = []
+        for item in responses:
+            data.append({
+                "response_id": item.id,
+                "request_id": item.blood_request.id,
+                "donor_id": item.donor.id,
+                "donor_name": f"{item.donor.first_name} {item.donor.last_name}",
+                "donor_blood_group": item.donor.blood_group,
+                "patient_name": item.blood_request.patient_name,
+                "blood_request_group": item.blood_request.blood_group,
+                "status": item.status,
+                "scheduled_date": str(item.scheduled_date) if item.scheduled_date else None,
+                "deadline": str(item.blood_request.required_by_date),
+            })
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class HospitalAcknowledgeDonorView(APIView):
+    def post(self, request):
+        response_id = request.data.get("response_id")
+        scheduled_date = request.data.get("scheduled_date")
+
+        if not response_id or not scheduled_date:
+            return Response({"message": "response_id and scheduled_date are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            donor_response = DonorResponse.objects.get(id=response_id)
+        except DonorResponse.DoesNotExist:
+            return Response({"message": "donor response not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Ensure scheduled date is before or on the request deadline
+        deadline = donor_response.blood_request.required_by_date
+        if str(scheduled_date) > str(deadline):
+            return Response({"message": f"Scheduled date must be on or before the deadline ({deadline})"}, status=status.HTTP_400_BAD_REQUEST)
+
+        donor_response.status = "scheduled"
+        donor_response.scheduled_date = scheduled_date
+        donor_response.save(update_fields=["status", "scheduled_date", "updated_at"])
+
+        # Mark donor as temporarily unavailable while scheduled
+        donor = donor_response.donor
+        donor.is_available = False
+        donor.save(update_fields=["is_available", "updated_at"])
+
+        blood_request = donor_response.blood_request
+        blood_request.status = "scheduled"
+        blood_request.save(update_fields=["status", "updated_at"])
+
+        return Response({"message": "Donor acknowledged and donation scheduled", "status": "SCHEDULED"}, status=status.HTTP_200_OK)

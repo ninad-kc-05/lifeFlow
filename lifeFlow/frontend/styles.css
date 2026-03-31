@@ -18,6 +18,9 @@
   --transition-fast: 160ms ease-out;
 }
 
+
+
+
 * {
   margin: 0;
   padding: 0;
@@ -45,15 +48,15 @@ body {
 /* ----- Layout helpers ----- */
 
 .container {
-  width: min(1120px, 100% - 3rem);
-  margin: 2.5rem auto;
+  width: min(1200px, 100% - 1.5rem);
+  margin: 1.25rem auto;
   flex: 1 0 auto;
 }
 
 .card-panel {
   background: var(--color-surface);
-  border-radius: 1.15rem;
-  padding: 2.25rem 2.5rem;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--color-border-subtle);
 }
@@ -95,34 +98,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
-  padding: 10px 22px;
+  gap: 1.5rem;
+  padding: 6px 18px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
 .logo img {
-  width: 220px;
+  width: 160px;
   height: auto;
-  max-height: 80px;
+  max-height: 50px;
   object-fit: contain;
 }
 
 .logo h2 {
-  font-size: 1.35rem;
-  letter-spacing: 0.04em;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
   font-weight: 700;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .nav-links button {
@@ -130,11 +133,11 @@ body {
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   color: var(--color-text-muted);
-  padding: 0.45rem 0.95rem;
-  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   transition: background-color var(--transition-fast),
     color var(--transition-fast),
@@ -154,23 +157,23 @@ body {
 .hero {
   display: flex;
   flex-wrap: wrap;
-  gap: 2.25rem;
+  gap: 1.5rem;
   align-items: center;
   justify-content: space-between;
   background: linear-gradient(135deg, #e8f4f8, #f0f9f4);
-  padding: 2.75rem 2.4rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem 1.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--color-border-subtle);
 }
 
 .hero-text {
-  flex: 1 1 260px;
+  flex: 1 1 240px;
 }
 
 .hero-text h1 {
-  font-size: clamp(2rem, 3vw, 2.5rem);
-  margin-bottom: 0.9rem;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  margin-bottom: 0.5rem;
   color: var(--color-text-main);
 }
 
@@ -180,9 +183,9 @@ body {
 
 .hero-text p {
   color: var(--color-text-muted);
-  line-height: 1.7;
-  font-size: 0.98rem;
-  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
 }
 
 .hero-badge {
@@ -210,13 +213,13 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1.3rem;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
   border-radius: var(--radius-pill);
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   cursor: pointer;
   transition: background-color var(--transition-fast),
@@ -229,12 +232,12 @@ body {
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary), #22b8cf);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(26, 138, 158, 0.35);
+  box-shadow: 0 3px 10px rgba(26, 138, 158, 0.3);
 }
 
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
-  box-shadow: 0 6px 20px rgba(26, 138, 158, 0.5);
+  box-shadow: 0 5px 15px rgba(26, 138, 158, 0.4);
   transform: translateY(-1px);
 }
 
@@ -263,36 +266,36 @@ body {
 /* ----- Role / Dashboard Cards ----- */
 
 .roles {
-  margin-top: 2.75rem;
+  margin-top: 1.5rem;
 }
 
 .roles h2 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   color: var(--color-text-main);
 }
 
 .role-cards,
 .cards{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
   align-items: stretch;
 }
 
 .team-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit);
-  gap: 1.6rem;
+  gap: 1.2rem;
   align-items: stretch;
 }
 
 .card {
   background: var(--color-surface);
-  padding: 1.5rem 1.7rem;
-  border-radius: 1.1rem;
-  box-shadow: var(--shadow-soft);
+  padding: 1rem 1.2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid var(--color-border-subtle);
   transition: transform var(--transition-fast),
     box-shadow var(--transition-fast),
@@ -301,20 +304,20 @@ body {
 }
 
 .card h3 {
-  margin-bottom: 0.4rem;
-  font-size: 1.05rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
   color: var(--color-text-main);
 }
 
 .card p {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
 .card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(26, 138, 158, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(26, 138, 158, 0.12);
   border-color: rgba(26, 138, 158, 0.4);
   background:
     radial-gradient(circle at top left, rgba(26, 138, 158, 0.06), transparent 55%),

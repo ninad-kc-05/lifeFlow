@@ -21,7 +21,7 @@
             <div style="position:relative; display:inline-block;">
                 <button class="profile-btn" onclick="toggleProfilePopup(event)">&#9881; Profile</button>
                 <div class="profile-popup" id="profilePopup">
-                    <a href="donor-profile.html">Rohan S. (View Profile)</a>
+                    <a href="donor-profile.html" id="profileNameLink">Donor (View Profile)</a>
                     <div class="popup-divider"></div>
                     <a href="status.html">Status Update</a>
                     <div class="popup-divider"></div>
@@ -32,43 +32,68 @@
     </div>
 </div>
 
-<!-- Dashboard Content -->
-<div class="container">
-    <h2>Welcome, Donor 👋</h2>
+    <!-- Dashboard Content -->
+    <div class="container">
+        <h2 id="welcomeHeader">Welcome, Donor 👋</h2>
+
+        <!-- Post-Donation Screening Report Modal -->
+        <div id="screeningReportModal" class="card-panel mt-lg" style="display:none; background: #f0fdf4; border: 1px solid #dcfce7;">
+            <h3 style="color: #166534;">📋 Latest Medical Report</h3>
+            <p class="text-muted mt-sm">Your vitals recorded during your last donation at <strong id="reportHospital"></strong> on <span id="reportDate"></span>.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #dcfce7;">
+                    <label style="display:block; font-size:0.75rem; color:#64748b;">Weight</label>
+                    <strong id="reportWeight">--</strong> kg
+                </div>
+                <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #dcfce7;">
+                    <label style="display:block; font-size:0.75rem; color:#64748b;">Height</label>
+                    <strong id="reportHeight">--</strong> cm
+                </div>
+                <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #dcfce7;">
+                    <label style="display:block; font-size:0.75rem; color:#64748b;">BMI</label>
+                    <strong id="reportBMI">--</strong>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button class="btn btn-success btn-sm" onclick="acknowledgeReport()">Acknowledge & Close</button>
+            </div>
+        </div>
 
     <!-- Donor summary -->
     <div class="cards mt-sm">
         <div class="card">
             <h3>Total Donations</h3>
-            <p class="text-muted">3 lifetime donations</p>
+            <p class="text-muted" id="totalDonationsStat">Loading...</p>
         </div>
         <div class="card">
             <h3>Last Donation</h3>
-            <p class="text-muted">45 days ago</p>
+            <p class="text-muted" id="lastDonationStat">Loading...</p>
         </div>
         <div class="card">
-            <h3>Next Eligible Date</h3>
-            <p class="text-muted">in 15 days</p>
+            <h3>Eligibility</h3>
+            <p class="text-muted" id="eligibilityStat">Loading...</p>
         </div>
     </div>
 
     <!-- Main actions -->
     <div class="cards mt-lg">
         <div class="card">
-            <h3>Donate Blood</h3>
-            <p>Complete a survey and schedule a blood donation.</p>
-            <button class="btn btn-primary" onclick="donate()">Donate Now</button>
+            <h3>Survey Form</h3>
+            <p>Complete a survey to determine your eligibility for blood donation.</p>
+            <button class="btn btn-primary" onclick="donate()">Fill Survey Form</button>
         </div>
 
         <div class="card">
             <h3>My Donations</h3>
-            <p>View your past donation history.</p>
+            <p style="padding-bottom: 15px;">View your past donation history.</p>
+            
             <button class="btn btn-primary" onclick="viewHistory()">View History</button>
         </div>
 
         <div class="card">
             <h3>Matched Requests</h3>
-            <p>View blood requests that match your profile.</p>
+            <p style="padding-bottom: 15px;">View blood requests that match your profile.</p>
             <button class="btn btn-primary" onclick="viewMatchedRequests()">View Requests</button>
         </div>
     </div>
@@ -103,24 +128,160 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+
 function goHome() { window.location.href = "index.html"; }
 function logout() { localStorage.clear(); window.location.href = "login.html"; }
 function donate() { window.location.href = "survey_form.html"; }
 function viewHistory() { window.location.href = "donor-history.html"; }
 function viewMatchedRequests() { window.location.href = "Donor_gets_request.html"; }
 
+function acknowledgeReport() {
+    sessionStorage.setItem('reportAcknowledged', 'true');
+    document.getElementById('screeningReportModal').style.display = 'none';
+}
+
 function toggleProfilePopup(e) {
     e.stopPropagation();
     document.getElementById('profilePopup').classList.toggle('show');
 }
 document.addEventListener('click', function() {
-    document.getElementById('profilePopup').classList.remove('show');
+    const popup = document.getElementById('profilePopup');
+    if (popup) popup.classList.remove('show');
 });
 
+// Role protection
 if (localStorage.getItem("userRole") !== "donor") {
     alert("Unauthorized access!");
     window.location.href = "login.html";
 }
+
+function loadDonorDashboard() {
+    let donorId = localStorage.getItem('donor_id');
+    const userPhone = localStorage.getItem('userPhone');
+
+    if (!donorId && !userPhone) {
+        console.error("No donor_id or userPhone found in localStorage");
+        return;
+    }
+
+    // Fetch Dashboard Summary
+    let url = API_BASE + "/donor/dashboard-summary/";
+    if (donorId) {
+        url += "?donor_id=" + donorId;
+    } else {
+        url += "?donor_mobile=" + encodeURIComponent(userPhone);
+    }
+
+    fetch(url)
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+            if (result.status === "success") {
+                 const data = result.data;
+                 
+                 // Update Name
+                 const fullName = (data.first_name || data.last_name) ? (data.first_name + " " + data.last_name) : "N/A";
+                 document.getElementById('welcomeHeader').textContent = "Welcome, " + (data.first_name || "Donor") + " 👋";
+                 document.getElementById('profileNameLink').textContent = fullName + " (View Profile)";
+
+                 // Update Stats
+                 document.getElementById('totalDonationsStat').textContent = (data.total_donations !== undefined && data.total_donations !== null) ? data.total_donations + " lifetime donations" : "N/A";
+                document.getElementById('lastDonationStat').textContent = (data.days_ago !== undefined && data.days_ago !== null) ? data.days_ago + " days ago" : "N/A";
+                
+                const eligibilityEl = document.getElementById('eligibilityStat');
+                if (data.can_donate) {
+                    eligibilityEl.textContent = "Eligible to donate now!";
+                    eligibilityEl.style.color = "#16a34a"; // Green
+                    eligibilityEl.style.fontWeight = "600";
+                } else if (data.donor_status !== 'active') {
+                    // Show status reason for medical hold, unavailable, etc.
+                    const statusLabels = {
+                        'medical': 'Medical Hold',
+                        'unavailable': 'Temporarily Unavailable',
+                        'inactive': 'Inactive'
+                    };
+                    const label = statusLabels[data.donor_status] || 'Ineligible';
+                    eligibilityEl.innerHTML = `${label}<br><span style="font-size:0.75rem; color:#64748b; font-weight:normal;">Reason: ${data.status_reason || 'N/A'}</span>`;
+                    eligibilityEl.style.color = "#dc2626"; // Red
+                } else if (!data.survey_valid) {
+                    eligibilityEl.innerHTML = `Survey Expired<br><span style="font-size:0.75rem; color:#64748b; font-weight:normal;">Validity: 90 days</span>`;
+                    eligibilityEl.style.color = "#d97706"; // Orange
+                } else if (data.days_to_wait !== undefined && data.days_to_wait !== null) {
+                    if (data.days_to_wait > 0) {
+                        eligibilityEl.textContent = "Wait " + data.days_to_wait + " more days";
+                    } else if (!data.health_eligible) {
+                        eligibilityEl.textContent = "Not health eligible (check survey)";
+                    } else {
+                        eligibilityEl.textContent = "Not eligible currently";
+                    }
+                    eligibilityEl.style.color = "#dc2626"; // Red
+                } else {
+                    eligibilityEl.textContent = "N/A";
+                    eligibilityEl.style.color = "var(--color-text-muted)";
+                }
+
+                // Update Match Section
+                const matchSection = document.getElementById('requestMatchSection');
+                const matchText = matchSection.querySelector('p');
+                const matchHeader = matchSection.querySelector('h3');
+                
+                if (data.has_active_request) {
+                    matchSection.style.display = "block";
+                    if (data.active_request_status === 'scheduled') {
+                        matchHeader.textContent = "📅 Donation Scheduled";
+                        matchText.innerHTML = "<strong>Action Required:</strong> A hospital has scheduled your donation. Please confirm the date.";
+                    } else if (data.active_request_status === 'schedule_accepted') {
+                        matchHeader.textContent = "✅ Schedule Confirmed";
+                        matchText.textContent = "Your donation schedule is confirmed. Please visit the hospital at the scheduled time.";
+                    } else if (data.active_request_status === 'accepted') {
+                        matchHeader.textContent = "⏳ Awaiting Hospital";
+                        matchText.textContent = "You've accepted the request. Please wait for the hospital to schedule a donation date.";
+                    } else {
+                        matchHeader.textContent = "🔔 Request Match Found";
+                        matchText.textContent = "A hospital needs blood matching your profile. View details to respond.";
+                    }
+                } else if (data.can_donate) {
+                     matchSection.style.display = "block";
+                     matchHeader.textContent = "🔔 Request Match Found";
+                     matchText.textContent = "You are eligible to donate! A hospital might need your " + (data.blood_group || "N/A") + " blood.";
+                 } else {
+                    matchSection.style.display = "none";
+                }
+
+                // Show Latest Medical Report if available
+                if (data.latest_screening) {
+                    const report = data.latest_screening;
+                    const reportModal = document.getElementById('screeningReportModal');
+                    
+                    // Only show if not recently acknowledged (using simple session check for now)
+                    if (!sessionStorage.getItem('reportAcknowledged')) {
+                        reportModal.style.display = 'block';
+                        document.getElementById('reportHospital').textContent = report.hospital_name;
+                        document.getElementById('reportDate').textContent = report.date;
+                        document.getElementById('reportWeight').textContent = report.weight || '--';
+                        document.getElementById('reportHeight').textContent = report.height || '--';
+                        
+                        // Calculate BMI
+                        if (report.weight && report.height) {
+                            const h_m = report.height / 100;
+                            const bmi = (report.weight / (h_m * h_m)).toFixed(1);
+                            document.getElementById('reportBMI').textContent = bmi;
+                        } else {
+                            document.getElementById('reportBMI').textContent = '--';
+                        }
+                    }
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error("Failed to load donor summary:", err);
+            document.getElementById('totalDonationsStat').textContent = "Error loading";
+            document.getElementById('lastDonationStat').textContent = "Error loading";
+            document.getElementById('eligibilityStat').textContent = "Error loading";
+        });
+}
+
+loadDonorDashboard();
 </script>
 
 </body>

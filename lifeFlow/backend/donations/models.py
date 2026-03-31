@@ -12,6 +12,7 @@ class DonationRecord(models.Model):
         ('scheduled', 'Scheduled'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
+        ('returned', 'Returned to Inventory'),
     ]
 
     donor = models.ForeignKey(

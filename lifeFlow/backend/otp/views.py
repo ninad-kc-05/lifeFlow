@@ -91,7 +91,19 @@ def verify_mobile_otp(request):
     otp_record.is_verified = True
     otp_record.save()
 
-    return JsonResponse({'status': 'success', 'message': 'OTP verified successfully'})
+    # Find the donor to get their ID and mark them as verified
+    donor = Donor.objects.filter(mobile_number=mobile_number).first()
+    if donor:
+        donor.is_verified = True
+        donor.save(update_fields=['is_verified', 'updated_at'])
+    
+    donor_id = donor.id if donor else None
+
+    return JsonResponse({
+        'status': 'success', 
+        'message': 'OTP verified successfully',
+        'donor_id': donor_id
+    })
 
 
 # -------------------------
@@ -114,6 +126,9 @@ def request_email_otp(request):
 
     email = data.get('email', '').strip()
     user_type = data.get('user_type', '').strip().lower()
+    action = data.get('action', '').strip().lower()
+    patient_name = data.get('patient_name', 'N/A')
+    outcome_type = data.get('outcome_type', '').strip().upper()
 
     if not email or not user_type:
         return JsonResponse({'status': 'error', 'message': 'Email and user_type are required'}, status=400)
@@ -131,7 +146,14 @@ def request_email_otp(request):
 
     # Generate and send OTP
     otp = generate_email_otp(email, user_type)
-    email_sent = send_otp_email(email, otp)
+    
+    context = {
+        'user_type': user_type,
+        'action': action,
+        'patient_name': patient_name,
+        'outcome_type': outcome_type
+    }
+    email_sent = send_otp_email(email, otp, context=context)
 
     if not email_sent:
         return JsonResponse({'status': 'error', 'message': 'Failed to send OTP email. Please try again.'}, status=500)

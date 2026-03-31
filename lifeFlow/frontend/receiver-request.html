@@ -138,6 +138,11 @@
           setStatus("Server error while creating request.", true);
         });
     }
+
+    if (localStorage.getItem("userRole") !== "receiver") {
+      alert("Unauthorized access!");
+      window.location.href = "login.html";
+    }
   </script>
 </body>
 </html>

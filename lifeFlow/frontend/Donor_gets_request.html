@@ -3,64 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeFlow – Matched Requests</title>
+    <title>LifeFlow – Matched Request</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .request-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+        }
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 1rem;
+        }
+        .hospital-info h3 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1.25rem;
+        }
+        .urgency-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .urgency-normal { background: #e2e8f0; color: #475569; }
+        .urgency-urgent { background: #fef3c7; color: #d97706; }
+        .urgency-emergency { background: #fee2e2; color: #dc2626; }
+        
+        .request-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            margin-bottom: 0.25rem;
+        }
+        .info-item span {
+            font-weight: 600;
+            color: #334155;
+        }
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn-large {
+            flex: 1;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #64748b;
+        }
+    </style>
 </head>
 <body>
 
 <div class="header">
     <div class="header-top">
         <div class="logo" onclick="goHome()">
-        <img src="logo.jpeg" alt="LifeFlow">
-    </div>
-    <div class="nav-links">
-        <button onclick="goDonorDashboard()">Back to Dashboard</button>
+            <img src="logo.jpeg" alt="LifeFlow">
+        </div>
+        <div class="nav-links">
+            <button onclick="goDonorDashboard()">Back to Dashboard</button>
+        </div>
     </div>
 </div>
 
 <div class="container card-panel card-wide">
-    <h2 class="section-title">Matched <span>Requests</span></h2>
-    <p class="text-muted mt-sm">These blood requests match your profile (Blood Group: O+). Review and respond below.</p>
+    <h2 class="section-title">Blood <span>Donation Request</span></h2>
+    <p class="text-muted mt-sm" id="donorProfileInfo">Review the current request matched for your profile.</p>
 
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
-        <thead>
-            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
-                <th style="padding:0.5rem 0.25rem;">Hospital</th>
-                <th style="padding:0.5rem 0.25rem;">Patient</th>
-                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
-                <th style="padding:0.5rem 0.25rem;">Units Needed</th>
-                <th style="padding:0.5rem 0.25rem;">Priority</th>
-                <th style="padding:0.5rem 0.25rem;">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
-                <td style="padding:0.45rem 0.25rem;">Priya M.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">1</td>
-                <td style="padding:0.45rem 0.25rem;">Normal</td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-success btn-sm" onclick="acceptRequest(this)">Accept</button>
-                    <button class="btn btn-secondary btn-sm" onclick="declineRequest(this)">Decline</button>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:0.45rem 0.25rem;">Metro Hospital</td>
-                <td style="padding:0.45rem 0.25rem;">Anil R.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">2</td>
-                <td style="padding:0.45rem 0.25rem;">Urgent</td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-success btn-sm" onclick="acceptRequest(this)">Accept</button>
-                    <button class="btn btn-secondary btn-sm" onclick="declineRequest(this)">Decline</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div id="requestContainer">
+        <div class="empty-state">Loading request details...</div>
+    </div>
+
+    <!-- Screening Modal -->
+    <div id="screeningModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Hospital Screening Form</h3>
+                <p class="text-muted" style="font-size: 0.85rem;">Please provide your current health vitals for the hospital.</p>
+            </div>
+            <div class="modal-body">
+                <form id="screeningForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" step="0.1" name="weight" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Height (cm)</label>
+                            <input type="number" step="0.1" name="height" required>
+                        </div>
+                    </div>
+
+                    <!-- Gender Specific Questions -->
+                    <div id="genderQuestions" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9;">
+                        <!-- Dynamically injected -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeScreeningModal()">Cancel</button>
+                <button class="btn btn-success" onclick="submitAcceptance()">Confirm Acceptance</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Donor Instructions Dropdown -->
-    <details class="instruction-dropdown">
+    <details class="instruction-dropdown" style="margin-top: 2rem;">
         <summary>Donor Instructions</summary>
         <div class="dropdown-content">
             <ul style="list-style:none; padding:0;">
@@ -80,21 +200,265 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+var DONOR_ID = localStorage.getItem("donor_id");
+var USER_PHONE = localStorage.getItem("userPhone");
+
 function goHome() { window.location.href = "index.html"; }
 function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
 
-function acceptRequest(btn) {
-    var row = btn.closest("tr");
-    row.style.opacity = "0.5";
-    btn.parentElement.innerHTML = '<span style="color:#22c55e; font-weight:600;">Accepted</span>';
-    alert("You have accepted this request. (placeholder)");
+function updateGenderSpecificQuestions(gender) {
+    const container = document.getElementById('genderQuestions');
+    if (gender === 'Female') {
+        container.innerHTML = `
+            <div class="form-group">
+                <label>Are you pregnant or breastfeeding?</label>
+                <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                    <label style="font-weight:normal;"><input type="radio" name="female_specific" value="yes" required> Yes</label>
+                    <label style="font-weight:normal;"><input type="radio" name="female_specific" value="no"> No</label>
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:1rem;">
+                <label>Have you had a delivery or miscarriage in the last 6 months?</label>
+                <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                    <label style="font-weight:normal;"><input type="radio" name="female_history" value="yes" required> Yes</label>
+                    <label style="font-weight:normal;"><input type="radio" name="female_history" value="no"> No</label>
+                </div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="form-group">
+                <label>Have you had any minor surgery in the last 6 months?</label>
+                <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+                    <label style="font-weight:normal;"><input type="radio" name="male_specific" value="yes" required> Yes</label>
+                    <label style="font-weight:normal;"><input type="radio" name="male_specific" value="no"> No</label>
+                </div>
+            </div>
+        `;
+    }
 }
 
-function declineRequest(btn) {
-    var row = btn.closest("tr");
-    row.style.opacity = "0.4";
-    btn.parentElement.innerHTML = '<span style="color:#9ca3af; font-weight:600;">Declined</span>';
+function loadActiveRequest() {
+    if (!DONOR_ID && !USER_PHONE) {
+        alert("Please login first.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    let url = API_BASE + "/donor/active-request/";
+    if (DONOR_ID) {
+        url += "?donor_id=" + DONOR_ID;
+    } else {
+        url += "?donor_mobile=" + encodeURIComponent(USER_PHONE);
+    }
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            var container = document.getElementById("requestContainer");
+            if (!data.request) {
+                container.innerHTML = '<div class="empty-state">' +
+                    '<img src="status.jpg" alt="No Request" style="width:120px; opacity:0.5; margin-bottom:1rem; display:block; margin-left:auto; margin-right:auto;">' +
+                    '<h3>No Active Requests</h3>' +
+                    '<p>You don\'t have any pending donation requests at the moment. We\'ll notify you when a match is found!</p>' +
+                    '</div>';
+                return;
+            }
+
+            var req = data.request;
+            var urgencyClass = "urgency-" + (req.urgency || "normal").toLowerCase();
+            
+            // Set gender for screening form
+            localStorage.setItem('donorGender', req.donor_gender);
+            updateGenderSpecificQuestions(req.donor_gender);
+
+            var actionHtml = '';
+            var statusInfo = '';
+
+            if (req.status === 'pending') {
+                actionHtml = `
+                    <div class="actions">
+                        <button class="btn btn-success btn-large" onclick="respondToRequest(${req.request_id}, 'ACCEPTED')">Accept Request</button>
+                        <button class="btn btn-secondary btn-large" onclick="respondToRequest(${req.request_id}, 'DECLINED')">Decline</button>
+                    </div>
+                `;
+            } else if (req.status === 'accepted' || req.status === 'donor_accepted') {
+                statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; color: #475569;">
+                    <strong>Status:</strong> Request Accepted. Waiting for the hospital to schedule a donation date.
+                </div>`;
+                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #64748b; font-weight: 600;">✓ Request Accepted</div>`;
+            } else if (req.status === 'scheduled') {
+                statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; color: #92400e;">
+                    <strong>Action Required:</strong> The hospital has scheduled your donation for <strong>${req.scheduled_date}</strong>. Please confirm if you can make it.
+                </div>`;
+                actionHtml = `
+                    <div class="actions">
+                        <button class="btn btn-primary btn-large" onclick="acceptSchedule(${req.request_id})">Confirm Schedule</button>
+                        <button class="btn btn-secondary btn-large" onclick="respondToRequest(${req.request_id}, 'DECLINED')">Decline</button>
+                    </div>
+                `;
+            } else if (req.status === 'schedule_accepted') {
+                statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 8px; color: #166534;">
+                    <strong>Schedule Confirmed:</strong> You are scheduled to donate on <strong>${req.scheduled_date}</strong>. See you there!
+                </div>`;
+                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #16a34a; font-weight: 600;">✓ Schedule Confirmed</div>`;
+            }
+
+            container.innerHTML = `
+                ${statusInfo}
+                <div class="request-card">
+                    <div class="request-header">
+                        <div class="hospital-info">
+                            <h3>${req.hospital_name}</h3>
+                            <p class="text-muted" style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">${req.address}, ${req.city}</p>
+                        </div>
+                        <span class="urgency-badge ${urgencyClass}">${req.urgency}</span>
+                    </div>
+                    
+                    <div class="request-grid">
+                        <div class="info-item">
+                            <label>Patient Name</label>
+                            <span>${req.patient_name}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Blood Group</label>
+                            <span style="color: #dc2626; font-size: 1.1rem;">${req.blood_group}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Units Needed</label>
+                            <span>${req.units_needed} Bag</span>
+                        </div>
+                    </div>
+
+                    ${actionHtml}
+                </div>
+            `;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("requestContainer").innerHTML = '<div class="empty-state">Error loading request. Please try again later.</div>';
+        });
 }
+
+let currentRequestId = null;
+
+function respondToRequest(requestId, response) {
+    if (response === 'DECLINED' && !confirm("Are you sure you want to decline this request?")) return;
+
+    if (response === 'ACCEPTED') {
+        currentRequestId = requestId;
+        document.getElementById('screeningModal').style.display = 'flex';
+        return;
+    }
+
+    executeResponse(requestId, 'DECLINED');
+}
+
+function closeScreeningModal() {
+    document.getElementById('screeningModal').style.display = 'none';
+}
+
+function submitAcceptance() {
+    const form = document.getElementById('screeningForm');
+    const formData = new FormData(form);
+    const screeningData = {};
+    formData.forEach((value, key) => screeningData[key] = value);
+
+    // Validation
+    if (!screeningData.weight || !screeningData.height) {
+        alert("Please provide both weight and height.");
+        return;
+    }
+
+    executeResponse(currentRequestId, 'ACCEPTED', screeningData);
+}
+
+function executeResponse(requestId, response, screeningData = {}) {
+    var container = document.getElementById("requestContainer");
+    container.style.opacity = "0.5";
+    container.style.pointerEvents = "none";
+
+    var payload = {
+        request_id: requestId,
+        response: response,
+        ...screeningData
+    };
+    if (DONOR_ID) {
+        payload.donor_id = parseInt(DONOR_ID);
+    } else {
+        payload.donor_mobile = USER_PHONE;
+    }
+
+    fetch(API_BASE + "/donor/respond/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Failed to process request.");
+            container.style.opacity = "1";
+            container.style.pointerEvents = "auto";
+            return;
+        }
+
+        if (response === 'ACCEPTED') {
+            alert("Thank you! You have accepted the request. Please wait for the hospital to schedule a donation date.");
+            closeScreeningModal();
+            loadActiveRequest();
+        } else {
+            alert("Request declined.");
+            loadActiveRequest();
+        }
+    })
+    .catch(err => {
+        alert("Error responding to request.");
+        container.style.opacity = "1";
+        container.style.pointerEvents = "auto";
+    });
+}
+
+function acceptSchedule(requestId) {
+    var container = document.getElementById("requestContainer");
+    container.style.opacity = "0.5";
+    container.style.pointerEvents = "none";
+
+    var payload = {
+        request_id: requestId
+    };
+    if (DONOR_ID) {
+        payload.donor_id = parseInt(DONOR_ID);
+    } else {
+        payload.donor_mobile = USER_PHONE;
+    }
+
+    fetch(API_BASE + "/donor/accept-schedule/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Failed to confirm schedule.");
+            container.style.opacity = "1";
+            container.style.pointerEvents = "auto";
+            return;
+        }
+        alert("Schedule confirmed! Thank you.");
+        loadActiveRequest();
+    })
+    .catch(err => {
+        alert("Error confirming schedule.");
+        container.style.opacity = "1";
+        container.style.pointerEvents = "auto";
+    });
+}
+
+// Initial load
+loadActiveRequest();
 </script>
 
 </body>

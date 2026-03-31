@@ -11,10 +11,11 @@
 <div class="header">
     <div class="header-top">
         <div class="logo" onclick="goHome()">
-        <img src="logo.jpeg" alt="LifeFlow">
-    </div>
-    <div class="nav-links">
-        <button onclick="goDonorDashboard()">Back to Dashboard</button>
+            <img src="logo.jpeg" alt="LifeFlow">
+        </div>
+        <div class="nav-links">
+            <button onclick="goDonorDashboard()">Back to Dashboard</button>
+        </div>
     </div>
 </div>
 
@@ -22,23 +23,26 @@
     <h2 class="text-center">Donor Status Update</h2>
     <p class="text-muted mt-sm text-center">Update your current availability status.</p>
 
-    <label>Current Status</label>
-    <div style="margin:0.5rem 0 1rem; padding:0.6rem 1rem; border-radius:var(--radius-pill); background:rgba(34,197,94,0.15); color:#22c55e; font-weight:600; font-size:0.9rem; display:inline-block;">
-        Active &amp; Available
+    <div id="statusIndicatorContainer" style="text-align: center; margin: 1.5rem 0;">
+        <label style="display: block; margin-bottom: 0.5rem;">Current Status</label>
+        <div id="currentStatusBadge" style="padding:0.6rem 1.2rem; border-radius:var(--radius-pill); font-weight:700; font-size:0.9rem; display:inline-block;">
+            Loading...
+        </div>
     </div>
 
-    <label>Update Status</label>
+    <label for="statusSelect">Update Status</label>
     <select id="statusSelect">
-        <option value="active">Active &amp; Available</option>
+        <option value="active">Active & Available</option>
         <option value="unavailable">Temporarily Unavailable</option>
         <option value="medical">Medical Hold</option>
         <option value="inactive">Inactive</option>
     </select>
 
-    <label>Reason (optional)</label>
-    <textarea id="statusReason" placeholder="Reason for status change..."></textarea>
+    <label for="statusReason">Reason (optional)</label>
+    <textarea id="statusReason" placeholder="Reason for status change..." style="width: 100%; min-height: 80px; padding: 0.6rem; border-radius: 8px; border: 1px solid #d1dce6; margin-top: 0.3rem; margin-bottom: 0.8rem;"></textarea>
 
-    <button class="btn btn-primary" style="width:100%;" onclick="updateStatus()">Update Status</button>
+    <button id="updateBtn" class="btn btn-primary" style="width:100%;" onclick="updateStatus()">Update Status</button>
+    <div id="msg" style="text-align: center; margin-top: 1rem; font-size: 0.9rem;"></div>
 </div>
 
 <div class="footer">
@@ -46,14 +50,100 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+
 function goHome() { window.location.href = "index.html"; }
 function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
 
-function updateStatus() {
-    var status = document.getElementById("statusSelect").value;
-    alert("Status updated to: " + status + " (placeholder)");
-    window.location.href = "donor-dashboard.html";
+function getStatusInfo(status) {
+    switch(status) {
+        case 'active': return { label: 'Active & Available', bg: 'rgba(34,197,94,0.15)', color: '#16a34a' };
+        case 'unavailable': return { label: 'Temporarily Unavailable', bg: 'rgba(234,179,8,0.15)', color: '#ca8a04' };
+        case 'medical': return { label: 'Medical Hold', bg: 'rgba(239,68,68,0.15)', color: '#dc2626' };
+        case 'inactive': return { label: 'Inactive', bg: 'rgba(100,116,139,0.15)', color: '#64748b' };
+        default: return { label: 'Unknown', bg: '#f1f5f9', color: '#64748b' };
+    }
 }
+
+function loadStatus() {
+    const donorId = localStorage.getItem('donor_id');
+    const userPhone = localStorage.getItem('userPhone');
+    
+    if (!donorId && !userPhone) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    let url = API_BASE + "/donor/profile/";
+    url += donorId ? `?donor_id=${donorId}` : `?donor_mobile=${encodeURIComponent(userPhone)}`;
+
+    fetch(url)
+        .then(res => res.json())
+        .then(result => {
+            if (result.status === 'success') {
+                const status = result.data.status || 'active';
+                const info = getStatusInfo(status);
+                
+                const badge = document.getElementById('currentStatusBadge');
+                badge.textContent = info.label;
+                badge.style.backgroundColor = info.bg;
+                badge.style.color = info.color;
+                
+                document.getElementById('statusSelect').value = status;
+                document.getElementById('statusReason').value = result.data.status_reason || "";
+            }
+        })
+        .catch(err => console.error("Error loading status:", err));
+}
+
+function updateStatus() {
+    const donorId = localStorage.getItem('donor_id');
+    const newStatus = document.getElementById("statusSelect").value;
+    const reason = document.getElementById("statusReason").value;
+    const btn = document.getElementById("updateBtn");
+    const msg = document.getElementById("msg");
+
+    if (!donorId) {
+        alert("Session expired. Please login again.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Updating...";
+    msg.textContent = "";
+
+    fetch(API_BASE + "/donor/status/update/", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            donor_id: donorId,
+            status: newStatus,
+            reason: reason
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.status === 'success') {
+            msg.style.color = "green";
+            msg.textContent = "✓ Status updated successfully!";
+            loadStatus(); // Refresh badge
+            setTimeout(() => { window.location.href = "donor-dashboard.html"; }, 1500);
+        } else {
+            msg.style.color = "red";
+            msg.textContent = "Error: " + result.message;
+        }
+    })
+    .catch(err => {
+        msg.style.color = "red";
+        msg.textContent = "Server error. Please try again.";
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = "Update Status";
+    });
+}
+
+loadStatus();
 </script>
 
 </body>

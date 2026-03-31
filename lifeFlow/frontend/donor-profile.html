@@ -20,27 +20,34 @@
   <div class="container card-panel card-narrow">
     <!-- Avatar Placeholder -->
     <div style="text-align:center; margin-bottom:1rem;">
-      <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, var(--color-primary), #ff4b82); display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:700; color:#fff;">R</div>
+      <div id="profileAvatar" style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg, var(--color-primary), #ff4b82); display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:700; color:#fff;">D</div>
     </div>
     <h2 class="text-center">My Profile</h2>
     <p class="text-muted mt-sm text-center">Update your personal details below.</p>
 
     <label>Full Name</label>
-    <input type="text" value="Rohan S." />
+    <input type="text" id="fullName" readonly style="background-color: #f1f5f9; cursor: not-allowed;" />
 
     <label>Blood Group</label>
-    <input type="text" value="O+" />
+    <input type="text" id="bloodGroup" readonly style="background-color: #f1f5f9; cursor: not-allowed;" />
 
     <label>Phone</label>
-    <input type="text" value="+91-9876543210" />
+    <input type="text" id="phone" readonly style="background-color: #f1f5f9; cursor: not-allowed;" />
 
     <label>City</label>
-    <input type="text" value="Pune" />
+    <input type="text" id="city" />
 
-    <label>Email</label>
-    <input type="email" value="rohan@example.com" />
+    <label>State</label>
+    <input type="text" id="state" />
 
-    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="fakeSave()">Save Changes</button>
+    <label>Pincode</label>
+    <input type="text" id="pincode" />
+
+    <label>Address</label>
+    <textarea id="address" style="width: 100%; min-height: 80px; padding: 0.6rem; border-radius: 8px; border: 1px solid #d1dce6; margin-top: 0.3rem; margin-bottom: 0.8rem;"></textarea>
+
+    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" id="saveBtn" onclick="saveProfile()">Save Changes</button>
+    <div id="statusMsg" style="text-align:center; margin-top:0.75rem; font-size:0.9rem;"></div>
   </div>
 
   <div class="footer">
@@ -48,9 +55,95 @@
   </div>
 
   <script>
+    var API_BASE = "http://127.0.0.1:8000/api";
+
     function goHome() { window.location.href = "index.html"; }
     function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
-    function fakeSave() { alert("Profile save is dummy in this prototype."); }
+
+    function loadProfile() {
+      const donorId = localStorage.getItem('donor_id');
+      const userPhone = localStorage.getItem('userPhone');
+      
+      if (!donorId && !userPhone) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      let url = API_BASE + "/donor/profile/";
+      if (donorId) {
+        url += "?donor_id=" + donorId;
+      } else {
+        url += "?donor_mobile=" + encodeURIComponent(userPhone);
+      }
+
+      fetch(url)
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === 'success') {
+            const d = result.data;
+            document.getElementById('fullName').value = d.first_name + " " + d.last_name;
+            document.getElementById('bloodGroup').value = d.blood_group;
+            document.getElementById('phone').value = d.mobile_number;
+            document.getElementById('city').value = d.city || "";
+            document.getElementById('state').value = d.state || "";
+            document.getElementById('pincode').value = d.pincode || "";
+            document.getElementById('address').value = d.address_line || "";
+            
+            const initial = d.first_name ? d.first_name.charAt(0).toUpperCase() : "D";
+            document.getElementById('profileAvatar').textContent = initial;
+          }
+        })
+        .catch(err => console.error("Error loading profile:", err));
+    }
+
+    function saveProfile() {
+      const donorId = localStorage.getItem('donor_id');
+      if (!donorId) {
+        alert("Session expired. Please login again.");
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveBtn');
+      const statusMsg = document.getElementById('statusMsg');
+      
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+      statusMsg.textContent = "";
+
+      const payload = {
+        donor_id: donorId,
+        city: document.getElementById('city').value.trim(),
+        state: document.getElementById('state').value.trim(),
+        pincode: document.getElementById('pincode').value.trim(),
+        address_line: document.getElementById('address').value.trim()
+      };
+
+      fetch(API_BASE + "/donor/profile/update/", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === 'success') {
+          statusMsg.style.color = "green";
+          statusMsg.textContent = "✓ Profile updated successfully!";
+        } else {
+          statusMsg.style.color = "red";
+          statusMsg.textContent = "Error: " + result.message;
+        }
+      })
+      .catch(err => {
+        statusMsg.style.color = "red";
+        statusMsg.textContent = "Server error. Please try again.";
+      })
+      .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Changes";
+      });
+    }
+
+    loadProfile();
   </script>
 </body>
 </html>

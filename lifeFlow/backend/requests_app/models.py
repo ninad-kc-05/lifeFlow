@@ -13,6 +13,9 @@ class BloodRequest(models.Model):
         ('rejected', 'Rejected'),
         ('donor_needed', 'Donor Needed'),
         ('assigned', 'Assigned'),
+        ('donor_accepted', 'Donor Accepted'),
+        ('scheduled', 'Scheduled'),
+        ('schedule_accepted', 'Schedule Accepted'),
         # Legacy compatibility
         ('allocated', 'Allocated'),
         ('approved', 'Approved'),
@@ -79,8 +82,12 @@ class DonorResponse(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('testing', 'Testing'),
+        ('accepted', 'Accepted'),
+        ('scheduled', 'Scheduled'),
+        ('schedule_accepted', 'Schedule Accepted'),
         ('selected', 'Selected'),
         ('rejected', 'Rejected'),
+        ('donated', 'Donated'),
         ('completed', 'Completed'),
     ]
 
@@ -135,6 +142,15 @@ class DonorResponse(models.Model):
     response_date = models.DateTimeField(
         auto_now_add=True
     )
+
+    scheduled_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    # Screening Data (Hospital Visit/Acceptance)
+    weight = models.FloatField(null=True, blank=True)
+    height = models.FloatField(null=True, blank=True)
 
     is_active = models.BooleanField(
         default=True

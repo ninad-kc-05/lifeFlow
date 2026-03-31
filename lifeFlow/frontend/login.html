@@ -146,19 +146,23 @@ function sendAdminOtp() {
     .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
     .then(function(result) {
         if (result.ok) {
-            alert("OTP sent to " + email);
+            alert("OTP sent to registered email.");
             var otpInput = document.getElementById("adminOtp");
             otpInput.disabled = false;
             otpInput.placeholder = "Enter OTP";
             otpInput.focus();
+            btn.textContent = "Resend OTP";
         } else {
             alert(result.data.message || "Failed to send OTP.");
+            btn.textContent = "Send OTP";
         }
     })
-    .catch(function() { alert("Server error. Please try again."); })
+    .catch(function() { 
+        alert("Server error. Please try again."); 
+        btn.textContent = "Send OTP";
+    })
     .finally(function() {
         btn.disabled = false;
-        btn.textContent = "Send OTP";
     });
 }
 
@@ -212,19 +216,23 @@ function sendOtp() {
     .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
     .then(function(result) {
         if (result.ok) {
-            alert("OTP sent to " + phone);
+            alert("OTP sent to registered mobile number.");
             var otpInput = document.getElementById("donorOtp");
             otpInput.disabled = false;
             otpInput.placeholder = "Enter OTP";
             otpInput.focus();
+            btn.textContent = "Resend OTP";
         } else {
             alert(result.data.message || "Failed to send OTP.");
+            btn.textContent = "Send OTP";
         }
     })
-    .catch(function() { alert("Server error. Please try again."); })
+    .catch(function() { 
+        alert("Server error. Please try again."); 
+        btn.textContent = "Send OTP";
+    })
     .finally(function() {
         btn.disabled = false;
-        btn.textContent = "Send OTP";
     });
 }
 
@@ -245,6 +253,9 @@ function loginDonor() {
         if (result.ok) {
             localStorage.setItem("userRole", "donor");
             localStorage.setItem("userPhone", phone);
+            if (result.data && result.data.donor_id) {
+                localStorage.setItem("donor_id", String(result.data.donor_id));
+            }
             window.location.href = "donor-dashboard.html";
         } else {
             alert(result.data.message || "OTP verification failed.");

@@ -90,7 +90,11 @@ function goAdminRequests() { window.location.href = "admin-requests.html"; }
 function renderDonors(items) {
     var tbody = document.getElementById("donorsBody");
     if (!Array.isArray(items) || items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="padding:0.45rem 0.25rem;">No donors found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="padding:2.5rem 1rem; text-align:center;">'
+            + '<div style="color:#64748b; font-size:1.1rem; margin-bottom:1rem;">No matching donors found in this location.</div>'
+            + '<button class="btn btn-primary" style="background:#10b981; border:none;" onclick="allotInventory(' + REQUEST_ID + ')">'
+            + 'Allot from Inventory Instead</button>'
+            + '</td></tr>';
         return;
     }
 
@@ -221,6 +225,27 @@ function assignDonor(donorId) {
     })
     .catch(function() {
         alert("Failed to allocate donor.");
+    });
+}
+
+function allotInventory(id) {
+    if (!confirm("No donors found. Would you like to fulfill this request by allotting units from the blood bank inventory?")) return;
+    
+    fetch(API_BASE + "/admin/requests/" + id + "/allot-inventory/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        if (!result.ok) {
+            alert(result.data && result.data.message ? result.data.message : "Failed to allot from inventory");
+            return;
+        }
+        alert("Success: Units allotted from inventory. Request completed.");
+        window.location.href = "admin-requests.html";
+    })
+    .catch(function() {
+        alert("Server error during inventory allotment.");
     });
 }
 

@@ -1,9 +1,27 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Sum
 
 from .models import BloodInventory
 from .serializers import BloodInventorySerializer
+
+
+class InventorySummaryView(APIView):
+    def get(self, request):
+        total_units = BloodInventory.objects.aggregate(total=Sum("units_available"))["total"] or 0
+        group_summary = (
+            BloodInventory.objects.values("blood_group")
+            .annotate(total_units=Sum("units_available"))
+            .order_by("blood_group")
+        )
+        
+        by_group = {item["blood_group"]: item["total_units"] for item in group_summary}
+        
+        return Response({
+            "total": total_units,
+            "by_group": by_group
+        }, status=status.HTTP_200_OK)
 
 
 class ListInventoryView(APIView):

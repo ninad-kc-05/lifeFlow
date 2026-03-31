@@ -290,10 +290,14 @@
     </div>
 
     <!-- =============================== -->
-    <!-- 2. DONOR INFORMATION (readonly) -->
+    <!-- MAIN FORM CONTENT (Hidden until type selected) -->
     <!-- =============================== -->
-    <div class="s-section">
-        <div class="s-section-title">Donor Information</div>
+    <div id="formContent" class="conditional">
+        <!-- =============================== -->
+        <!-- 2. DONOR INFORMATION (readonly) -->
+        <!-- =============================== -->
+        <div class="s-section">
+            <div class="s-section-title">Donor Information</div>
         <div class="info-grid">
             <div class="field-card">
                 <span class="field-label">Full Name</span>
@@ -626,7 +630,8 @@
     <div class="global-msg success-msg" id="globalSuccess">
         &#10003; Screening form submitted successfully! Eligibility will be reviewed.
     </div>
-</div>
+    </div> <!-- End formContent -->
+</div> <!-- End screening-card -->
 
 <!-- Footer -->
 <div class="footer">
@@ -649,6 +654,101 @@ document.getElementById('backBtn').addEventListener('click', () => {
     window.location.href = 'donor-dashboard.html';
 });
 
+/* ---------- Initialization & Data Fetching ---------- */
+let donorGender = 'male'; // Default
+
+function loadDonorData() {
+    const donorId = localStorage.getItem('donor_id');
+    const userPhone = localStorage.getItem('userPhone');
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    if (!donorId && !userPhone) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // 1. Fetch Profile for Name, Gender, Blood Group
+    let profileUrl = API_BASE + "/donor/profile/";
+    profileUrl += donorId ? `?donor_id=${donorId}` : `?donor_mobile=${encodeURIComponent(userPhone)}`;
+
+    fetch(profileUrl)
+        .then(res => res.json())
+        .then(result => {
+            if (result.status === 'success') {
+                const d = result.data;
+                document.getElementById('donorName').value = d.first_name + " " + d.last_name;
+                document.getElementById('donorBloodGroup').value = d.blood_group || "N/A";
+                document.getElementById('donorGender').value = d.gender || "Male";
+
+                // Check for non-active status (e.g., Medical Hold)
+                if (d.status && d.status !== 'active') {
+                    const statusLabels = {
+                        'medical': 'Medical Hold',
+                        'unavailable': 'Temporarily Unavailable',
+                        'inactive': 'Inactive'
+                    };
+                    const label = statusLabels[d.status] || 'Inactive';
+                    const reason = d.status_reason || 'No reason provided';
+                    
+                    // Replace form with message
+                    const container = document.querySelector('.screening-card');
+                    container.innerHTML = `
+                        <div class="screening-header-icon" style="background: #ef4444;">&#9888;</div>
+                        <h2 class="text-center">Survey Restricted</h2>
+                        <div class="global-msg error-msg visible" style="margin: 1.5rem 0; padding: 1.5rem;">
+                            <strong>You are currently on ${label}.</strong><br>
+                            <span style="font-size: 0.9rem; display: block; margin-top: 0.5rem;">
+                                <strong>Reason:</strong> ${reason}
+                            </span>
+                        </div>
+                        <p class="text-muted text-center">
+                            You cannot complete the screening survey while your status is restricted. 
+                            Please contact an administrator or update your status when you are eligible again.
+                        </p>
+                        <button class="submit-btn" style="margin-top: 1.5rem;" onclick="window.location.href='donor-dashboard.html'">Back to Dashboard</button>
+                    `;
+                    return; // Stop further processing
+                }
+                
+                // Update gender sections
+                donorGender = (d.gender || "Male").toLowerCase();
+                const maleSection = document.getElementById('maleSection');
+                const femaleSection = document.getElementById('femaleSection');
+                
+                if (donorGender === 'male') {
+                    showEl(maleSection);
+                    hideEl(femaleSection);
+                } else if (donorGender === 'female') {
+                    showEl(femaleSection);
+                    hideEl(maleSection);
+                }
+
+                // Calculate Age from DOB
+                if (d.date_of_birth) {
+                    const birthDate = new Date(d.date_of_birth);
+                    const age = Math.floor((new Date() - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
+                    document.getElementById('donorAge').value = age;
+                } else {
+                    document.getElementById('donorAge').value = "N/A";
+                }
+            }
+        });
+
+    // 2. Fetch Summary for Last Donation Date
+    let summaryUrl = API_BASE + "/donor/dashboard-summary/";
+    summaryUrl += donorId ? `?donor_id=${donorId}` : `?donor_mobile=${encodeURIComponent(userPhone)}`;
+
+    fetch(summaryUrl)
+        .then(res => res.json())
+        .then(result => {
+            if (result.status === 'success') {
+                document.getElementById('donorLastDonation').value = result.data.last_donation_date || "None";
+            }
+        });
+}
+
+loadDonorData();
+
 /* ---------- Helpers ---------- */
 const getRadio = (name) => {
     const el = document.querySelector(`input[name="${name}"]:checked`);
@@ -665,10 +765,14 @@ const hideEl = (el) => el.classList.remove('visible');
 const hbField = document.getElementById('hbField');
 const diseaseHospital = document.getElementById('diseaseHospital');
 const diseaseCamp = document.getElementById('diseaseCamp');
+const formContent = document.getElementById('formContent');
 
 document.querySelectorAll('input[name="screeningType"]').forEach(radio => {
     radio.addEventListener('change', () => {
         const isHospital = radio.value === 'hospital';
+        
+        /* Show main form */
+        showEl(formContent);
 
         /* Hemoglobin */
         isHospital ? showEl(hbField) : hideEl(hbField);
@@ -694,14 +798,12 @@ document.querySelectorAll('input[name="screeningType"]').forEach(radio => {
 });
 
 /* ===========================================================
-   2. GENDER-SPECIFIC SECTION (auto-detect from readonly)
+   2. GENDER-SPECIFIC SECTION (auto-detect from profile)
    =========================================================== */
-const donorGender = document.getElementById('donorGender').value.trim().toLowerCase();
 const maleSection = document.getElementById('maleSection');
 const femaleSection = document.getElementById('femaleSection');
 
-if (donorGender === 'male') showEl(maleSection);
-else if (donorGender === 'female') showEl(femaleSection);
+// Handled in loadDonorData()
 
 /* Female: show description box if any answer is Yes */
 const femaleQs = ['pregnant', 'breastfeeding', 'menstruation', 'recentDelivery'];
@@ -900,9 +1002,23 @@ document.getElementById('submitBtn').addEventListener('click', () => {
         if (!ok || json.status !== 'success') {
             throw new Error(json.message || 'Failed to save survey');
         }
-        okMsg.textContent = '✓ Survey saved successfully! BMI and eligibility were updated.';
+        
+        const isEligible = json.data.is_eligible;
+        const bmi = json.data.bmi;
+        
+        if (isEligible) {
+            okMsg.innerHTML = `✓ Survey saved successfully!<br><strong>Status: ELIGIBLE</strong> (BMI: ${bmi})<br>You can now accept donation on your dashboard.`;
+            okMsg.className = 'global-msg success-msg visible';
+        } else {
+            okMsg.innerHTML = `⚠ Survey saved successfully.<br><strong>Status: NOT ELIGIBLE</strong> (BMI: ${bmi})<br>Based on your responses, you are not eligible to donate at this time.`;
+            okMsg.className = 'global-msg error-msg visible'; // Use error style for ineligibility
+        }
+        
         showEl(okMsg);
         okMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Optional: redirect after 3 seconds
+        // setTimeout(() => { window.location.href = 'donor-dashboard.html'; }, 4000);
     })
     .catch((err) => {
         errMsg.textContent = err.message || 'Something went wrong while saving survey.';

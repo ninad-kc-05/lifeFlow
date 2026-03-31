@@ -24,60 +24,60 @@
 
 <!-- Dashboard Content -->
 <div class="container">
-    <h2>Welcome, Admin 👑</h2>
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.75rem;">Welcome, Admin 👑</h2>
 
     <!-- High-level stats -->
-    <div class="cards mt-sm">
-        <div class="card">
-            <h3>Total Donors</h3>
-            <p class="text-muted" id="totalDonorsStat">Loading...</p>
+    <div class="cards mt-sm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+        <div class="card" style="padding: 0.75rem; border-radius: 0.5rem; background: #fff; border: 1px solid #e2e8f0;">
+            <h3 style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">Total Donors</h3>
+            <p style="font-size: 1.1rem; font-weight: 700; color: #1e293b;" id="totalDonorsStat">Loading...</p>
         </div>
-        <div class="card">
-            <h3>Open Requests</h3>
-            <p class="text-muted" id="openRequestsStat">Loading...</p>
+        <div class="card" style="padding: 0.75rem; border-radius: 0.5rem; background: #fff; border: 1px solid #e2e8f0;">
+            <h3 style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">Open Requests</h3>
+            <p style="font-size: 1.1rem; font-weight: 700; color: #1e293b;" id="openRequestsStat">Loading...</p>
         </div>
-        <div class="card">
-            <h3>Units Available</h3>
-            <p class="text-muted" id="unitsAvailableStat">Loading...</p>
+        <div class="card" style="padding: 0.75rem; border-radius: 0.5rem; background: #fff; border: 1px solid #e2e8f0;">
+            <h3 style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">Units Available</h3>
+            <p style="font-size: 1.1rem; font-weight: 700; color: #1e293b;" id="unitsAvailableStat">Loading...</p>
         </div>
-        <div class="card">
-            <h3>Today&#39;s Donations</h3>
-            <p class="text-muted" id="todayDonationsStat">Derived from completed requests</p>
+        <div class="card" style="padding: 0.75rem; border-radius: 0.5rem; background: #fff; border: 1px solid #e2e8f0;">
+            <h3 style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">Today's Donations</h3>
+            <p style="font-size: 1.1rem; font-weight: 700; color: #1e293b;" id="todayDonationsStat">Loading...</p>
         </div>
     </div>
 
     <!-- Actions -->
-    <div class="cards mt-lg">
-        <div class="card">
-            <h3>Manage Users</h3>
-            <p>View and control donors, hospitals, and admins.</p>
-            <button class="btn btn-primary" onclick="manageUsers()">Manage Users</button>
+    <div class="cards mt-md" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+        <div class="card" style="padding: 1rem; border-radius: 0.75rem; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Manage Users</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">View and control donors, hospitals, and admins.</p>
+            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="manageUsers()">Manage Users</button>
         </div>
 
-        <div class="card">
-            <h3>Blood Requests</h3>
-            <p>Review and approve blood requests.</p>
-            <button class="btn btn-primary" onclick="manageRequests()">View Requests</button>
+        <div class="card" style="padding: 1rem; border-radius: 0.75rem; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Blood Requests</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem; padding-bottom: 25px;">Review and approve blood requests.</p>
+            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="manageRequests()">View Requests</button>
         </div>
 
-        <div class="card">
-            <h3>Blood Inventory</h3>
-            <p>Monitor blood availability across hospitals.</p>
-            <button class="btn btn-primary" onclick="manageInventory()">View Inventory</button>
+        <div class="card" style="padding: 1rem; border-radius: 0.75rem; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Blood Inventory</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">Monitor blood availability across hospitals.</p>
+            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="manageInventory()">View Inventory</button>
         </div>
 
-        <div class="card">
-            <h3>Reports</h3>
-            <p>System analytics and donation statistics.</p>
-            <button class="btn btn-primary" onclick="viewReports()">View Reports</button>
+        <div class="card" style="padding: 1rem; border-radius: 0.75rem; background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Reports</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">System analytics and donation statistics.</p>
+            <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="viewReports()">View Reports</button>
         </div>
     </div>
 
     <!-- Recent activity list -->
-    <div class="card-panel mt-lg">
-        <h3>Recent Activity</h3>
-        <p class="text-muted mt-sm">Latest request activity from backend.</p>
-        <ul id="recentActivityList" class="mt-sm" style="list-style: none; padding-left: 0; font-size: 0.9rem;"></ul>
+    <div class="card-panel mt-md" style="margin-top: 1.5rem; padding: 1rem;">
+        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Recent Activity</h3>
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.75rem;">Latest request activity from backend.</p>
+        <ul id="recentActivityList" style="list-style: none; padding-left: 0; font-size: 0.85rem; line-height: 1.5;"></ul>
     </div>
 </div>
 

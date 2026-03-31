@@ -18,39 +18,29 @@
   </div>
 
   <div class="container card-panel card-wide">
-    <h2 class="section-title">My <span>Donations</span> (Dummy)</h2>
-    <p class="text-muted mt-sm">Static donation history just for layout.</p>
+    <h2 class="section-title">My <span>Donation History</span></h2>
+    <p class="text-muted mt-sm">View your past blood donation records and their status.</p>
 
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:1rem;">
-      <thead>
-        <tr style="text-align:left; border-bottom:1px solid #1f2937;">
-          <th style="padding:0.5rem 0.25rem;">Date</th>
-          <th style="padding:0.5rem 0.25rem;">Center</th>
-          <th style="padding:0.5rem 0.25rem;">Blood Group</th>
-          <th style="padding:0.5rem 0.25rem;">Units</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">12 Jan 2025</td>
-          <td style="padding:0.45rem 0.25rem;">CityCare Hospital</td>
-          <td style="padding:0.45rem 0.25rem;">O+</td>
-          <td style="padding:0.45rem 0.25rem;">1</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">03 Sep 2024</td>
-          <td style="padding:0.45rem 0.25rem;">LifeCare Blood Bank</td>
-          <td style="padding:0.45rem 0.25rem;">O+</td>
-          <td style="padding:0.45rem 0.25rem;">1</td>
-        </tr>
-        <tr>
-          <td style="padding:0.45rem 0.25rem;">19 Mar 2024</td>
-          <td style="padding:0.45rem 0.25rem;">Metro Hospital</td>
-          <td style="padding:0.45rem 0.25rem;">O+</td>
-          <td style="padding:0.45rem 0.25rem;">1</td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="overflow-x: auto; margin-top: 1.5rem;">
+      <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead>
+          <tr style="text-align:left; border-bottom:2px solid #e2e8f0; color: #64748b;">
+            <th style="padding:0.75rem 0.5rem;">Date</th>
+            <th style="padding:0.75rem 0.5rem;">Center / Hospital</th>
+            <th style="padding:0.75rem 0.5rem;">Type</th>
+            <th style="padding:0.75rem 0.5rem;">Blood Group</th>
+            <th style="padding:0.75rem 0.5rem;">Units</th>
+            <th style="padding:0.75rem 0.5rem;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <!-- Data will be injected here -->
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">Loading history...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="footer">
@@ -58,8 +48,70 @@
   </div>
 
   <script>
+    var API_BASE = "http://127.0.0.1:8000/api";
+
     function goHome() { window.location.href = "index.html"; }
     function goDonorDashboard() { window.location.href = "donor-dashboard.html"; }
+
+    function loadDonationHistory() {
+      const donorId = localStorage.getItem('donor_id');
+      const userPhone = localStorage.getItem('userPhone');
+      
+      if (!donorId && !userPhone) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      let url = API_BASE + "/donor/donation-history/";
+      if (donorId) {
+        url += "?donor_id=" + donorId;
+      } else {
+        url += "?donor_mobile=" + encodeURIComponent(userPhone);
+      }
+
+      const tableBody = document.getElementById('historyTableBody');
+
+      fetch(url)
+        .then(res => res.json())
+        .then(result => {
+          if (result.status === 'success') {
+            const donations = result.data;
+            if (donations.length === 0) {
+              tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">No donation records found.</td></tr>';
+              return;
+            }
+
+            tableBody.innerHTML = donations.map(d => {
+              const dateStr = new Date(d.date).toLocaleDateString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric'
+              });
+              
+              const statusColor = d.status === 'completed' ? '#16a34a' : (d.status === 'pending' ? '#ca8a04' : '#dc2626');
+              
+              return `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 1rem 0.5rem; font-weight: 600;">${dateStr}</td>
+                  <td style="padding: 1rem 0.5rem;">${d.hospital || 'N/A'}</td>
+                  <td style="padding: 1rem 0.5rem; color: #64748b;">${d.component || 'N/A'}</td>
+                  <td style="padding: 1rem 0.5rem;"><span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">${d.blood_group}</span></td>
+                  <td style="padding: 1rem 0.5rem; font-weight: 600;">${d.units} Unit(s)</td>
+                  <td style="padding: 1rem 0.5rem;">
+                    <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; font-size: 0.85rem;">${d.status}</span>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">Error: ${result.message}</td></tr>`;
+          }
+        })
+        .catch(err => {
+          console.error("Error loading history:", err);
+          tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">Failed to connect to server.</td></tr>';
+        });
+    }
+
+    loadDonationHistory();
   </script>
 </body>
 </html>

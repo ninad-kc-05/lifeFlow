@@ -35,25 +35,48 @@ def generate_email_otp(email, user_type):
     return otp_code
 
 
-def send_otp_email(email, otp):
+def send_otp_email(email, otp, context=None):
     """
     Send OTP to user's email using Gmail SMTP.
     """
     sender_email = settings.EMAIL_HOST_USER
     sender_password = settings.EMAIL_HOST_PASSWORD
 
+    subject = 'LifeFlow OTP Verification'
+    greeting = "Dear User,"
+    action_text = "You are attempting to log in to the LifeFlow Blood Donation Management System."
+    
+    if context:
+        user_type = context.get('user_type', '').lower()
+        action = context.get('action', '').lower()
+        patient_name = context.get('patient_name', 'N/A')
+        outcome_type = context.get('outcome_type', '').upper()
+        
+        if action == 'finalize_donation':
+            subject = 'LifeFlow: Donation Finalization Authorization'
+            outcome_desc = "TRANSFERRED TO PATIENT" if outcome_type == 'TRANSFER' else "RETURNED TO INVENTORY"
+            action_text = f"You are authorizing the final outcome for the blood donation request for patient: {patient_name}.\n\n" \
+                         f"The selected outcome is: {outcome_desc}."
+        elif user_type == 'admin':
+            subject = 'LifeFlow Admin Login'
+            action_text = "You are logging in as an Administrator."
+        elif user_type == 'hospital':
+            subject = 'LifeFlow Hospital Login'
+            action_text = "You are logging in as a Hospital/Receiver."
+
     msg = EmailMessage()
-    msg['Subject'] = 'LifeFlow Login OTP Verification'
+    msg['Subject'] = subject
     msg['From'] = sender_email
     msg['To'] = email
-    msg.set_content(
-        f"Dear User,\n\n"
-        f"You are attempting to log in to the LifeFlow Blood Donation Management System.\n\n"
-        f"Your One-Time Password (OTP) is: {otp}\n\n"
-        f"This OTP is valid for 5 minutes.\n\n"
-        f"Please do not share this OTP with anyone.\n\n"
-        f"LifeFlow Team"
-    )
+    
+    content = f"{greeting}\n\n" \
+              f"{action_text}\n\n" \
+              f"Your One-Time Password (OTP) is: {otp}\n\n" \
+              f"This OTP is valid for 5 minutes.\n\n" \
+              f"Please do not share this OTP with anyone.\n\n" \
+              f"LifeFlow Team"
+              
+    msg.set_content(content)
 
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:

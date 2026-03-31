@@ -3,86 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LifeFlow – Allocated Patient Details</title>
+    <title>LifeFlow – Donor Management</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .status-badge.scheduled { background: #fef3c7; color: #d97706; }
+        .status-badge.schedule_accepted { background: #dcfce7; color: #16a34a; border: 1px solid #16a34a; }
+        .status-badge.accepted { background: #dcfce7; color: #16a34a; }
+        .status-badge.donated { background: #3b82f6; color: #fff; }
+        
+        .action-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .date-input {
+            padding: 0.35rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+
+        /* Disabled OTP field styling */
+        #hospitalAuthOtp:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+        }
+        .modal-body {
+            margin-bottom: 2rem;
+        }
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        .modal-option {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-option:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .modal-option.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .modal-option h4 {
+            margin: 0 0 0.25rem 0;
+            color: #1e293b;
+        }
+        .modal-option p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+    </style>
 </head>
 <body>
 
 <div class="header">
     <div class="header-top">
         <div class="logo" onclick="goHome()">
-        <img src="logo.jpeg" alt="LifeFlow">
-    </div>
-    <div class="nav-links">
-        <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+            <img src="logo.jpeg" alt="LifeFlow">
+        </div>
+        <div class="nav-links">
+            <button onclick="goReceiverDashboard()">Back to Dashboard</button>
+        </div>
     </div>
 </div>
 
 <div class="container card-panel card-wide">
-    <h2 class="section-title">Allocated Donor <span>Details</span></h2>
+    <h2 class="section-title">Donor <span>Management</span></h2>
+    <p class="text-muted mt-sm">Manage donors who have accepted your blood requests.</p>
 
-    <!-- Urgent Section -->
-    <h3 style="color:var(--color-primary); margin-top:1rem; font-size:1rem;">Urgent Requests</h3>
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
-        <thead>
-            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
-                <th style="padding:0.5rem 0.25rem;">Patient</th>
-                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
-                <th style="padding:0.5rem 0.25rem;">Donor Assigned</th>
-                <th style="padding:0.5rem 0.25rem;">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr id="urgentRow1">
-                <td style="padding:0.45rem 0.25rem;">Rahul S.</td>
-                <td style="padding:0.45rem 0.25rem;">B+</td>
-                <td style="padding:0.45rem 0.25rem;">Donor: Vikram T.</td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-success btn-sm" onclick="acceptAllocation('urgent', 1)">YES</button>
-                    <button class="btn btn-danger btn-sm" onclick="rejectAllocation('urgent', 1)">NO</button>
-                    <button class="btn btn-secondary btn-sm" id="urgentViewBtn1" onclick="alert('View details (placeholder)')">View</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- Urgent Reason Box -->
-    <div class="reason-box" id="urgentReasonBox1">
-        <label style="margin-top:0;">Reason for Rejection</label>
-        <textarea id="urgentReason1" placeholder="Enter reason..." style="min-height:60px;"></textarea>
-        <button class="btn btn-primary btn-sm" onclick="submitRejection('urgent', 1)" style="margin-top:0.5rem;">Submit</button>
+    <div id="donorsContainer" style="margin-top: 1.5rem;">
+        <div class="empty-state">Loading accepted donors...</div>
     </div>
+</div>
 
-    <!-- Normal Section -->
-    <h3 style="color:var(--color-text-muted); margin-top:2rem; font-size:1rem;">Normal Requests</h3>
-    <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin-top:0.5rem;">
-        <thead>
-            <tr style="text-align:left; border-bottom:1px solid #1f2937;">
-                <th style="padding:0.5rem 0.25rem;">Patient</th>
-                <th style="padding:0.5rem 0.25rem;">Blood Group</th>
-                <th style="padding:0.5rem 0.25rem;">Donor Assigned</th>
-                <th style="padding:0.5rem 0.25rem;">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr id="normalRow1">
-                <td style="padding:0.45rem 0.25rem;">Priya M.</td>
-                <td style="padding:0.45rem 0.25rem;">O+</td>
-                <td style="padding:0.45rem 0.25rem;">Donor: Rohan S.</td>
-                <td style="padding:0.45rem 0.25rem;">
-                    <button class="btn btn-success btn-sm" onclick="acceptAllocation('normal', 1)">YES</button>
-                    <button class="btn btn-danger btn-sm" onclick="rejectAllocation('normal', 1)">NO</button>
-                    <button class="btn btn-secondary btn-sm" id="normalViewBtn1" onclick="alert('View details (placeholder)')">View</button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+<!-- Completion Modal -->
+<div id="completionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Finalize Donation Process</h3>
+        </div>
+        <div class="modal-body">
+            <p class="text-muted mb-lg">The donor has visited and donated. Please select the outcome for the patient:</p>
+            
+            <div class="modal-option" onclick="selectOutcome('TRANSFER')">
+                <h4>✅ Successfully Transferred</h4>
+                <p>The blood units have been successfully transfused to the patient.</p>
+            </div>
+            
+            <div class="modal-option" onclick="selectOutcome('RETURN')">
+                <h4>🔄 Return to Inventory</h4>
+                <p>The patient recovered or no longer needs the units. Return to main inventory.</p>
+            </div>
 
-    <!-- Normal Reason Box -->
-    <div class="reason-box" id="normalReasonBox1">
-        <label style="margin-top:0;">Reason for Rejection</label>
-        <textarea id="normalReason1" placeholder="Enter reason..." style="min-height:60px;"></textarea>
-        <button class="btn btn-primary btn-sm" onclick="submitRejection('normal', 1)" style="margin-top:0.5rem;">Submit</button>
+            <div id="otpSection" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display:none;">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:600;">Authorize Action (Email OTP)</label>
+                <div class="action-container">
+                    <input type="text" id="hospitalAuthOtp" placeholder="Click Send OTP first" class="date-input" style="flex:1;" disabled>
+                    <button class="btn btn-secondary btn-sm" id="sendModalOtpBtn" onclick="sendModalOtp()">Send OTP</button>
+                </div>
+                <p class="text-muted" style="font-size:0.75rem; margin-top:0.5rem;">OTP will be sent to your registered hospital email.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="confirmFinalizeBtn" onclick="executeFinalize()" disabled>Confirm Outcome</button>
+        </div>
     </div>
 </div>
 
@@ -91,48 +163,329 @@
 </div>
 
 <script>
+var API_BASE = "http://127.0.0.1:8000/api";
+
+function getHospitalId() {
+    var params = new URLSearchParams(window.location.search);
+    var fromUrl = params.get("hospital_id");
+    if (fromUrl) {
+        localStorage.setItem("hospital_id", fromUrl);
+        return fromUrl;
+    }
+    return localStorage.getItem("hospital_id");
+}
+
+var HOSPITAL_ID = getHospitalId();
+
 function goHome() { window.location.href = "index.html"; }
 function goReceiverDashboard() { window.location.href = "receiver-dashboard.html"; }
 
-function acceptAllocation(type, id) {
-    // Update status to completed
-    alert("Allocation accepted! Status updated to Completed.\n\nThe donor has been confirmed and the request status is now marked as Completed.");
-    var row = document.getElementById(type + "Row" + id);
-    if (row) row.style.opacity = "0.5";
-    
-    // Hide action buttons
-    var actionCell = row.querySelector('td:last-child');
-    if (actionCell) {
-        actionCell.innerHTML = '<span style="color:#22c55e; font-weight:600; font-size:0.85rem;">✓ Completed</span>';
+function loadAcceptedDonors() {
+    if (!HOSPITAL_ID) {
+        alert("Please login as a hospital.");
+        window.location.href = "login.html";
+        return;
     }
+
+    fetch(API_BASE + "/hospital/accepted-donors/?hospital_id=" + HOSPITAL_ID)
+        .then(res => res.json())
+        .then(data => {
+            var container = document.getElementById("donorsContainer");
+            if (!Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No accepted donors found</h3><p>Donors will appear here once they accept your requests.</p></div>';
+                return;
+            }
+
+            var html = `
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                    <thead>
+                        <tr style="text-align:left; border-bottom:1px solid #e2e8f0;">
+                            <th style="padding:0.75rem 0.5rem;">Patient</th>
+                            <th style="padding:0.75rem 0.5rem;">Blood Group</th>
+                            <th style="padding:0.75rem 0.5rem;">Donor Name</th>
+                            <th style="padding:0.75rem 0.5rem;">Status</th>
+                            <th style="padding:0.75rem 0.5rem;">Donation Date</th>
+                            <th style="padding:0.75rem 0.5rem;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                var statusClass = item.status.toLowerCase();
+                var actionHtml = '';
+
+                if (item.status === 'accepted') {
+                    actionHtml = `
+                        <div class="action-container">
+                            <input type="date" class="date-input" id="date-${item.response_id}" max="${item.deadline}">
+                            <button class="btn btn-primary btn-sm" onclick="acknowledgeDonor(${item.response_id})">Schedule</button>
+                        </div>
+                    `;
+                } else if (item.status === 'scheduled' || item.status === 'schedule_accepted') {
+                    if (item.status === 'schedule_accepted') {
+                        actionHtml = `
+                            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                                <button class="btn btn-success btn-sm" onclick="openCompletionModal(${item.response_id}, ${item.request_id}, '${item.patient_name}')">Mark as Donated</button>
+                                <span style="font-size:0.75rem; color:#16a34a; font-weight:600;">✓ Schedule Confirmed</span>
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                                <span style="font-size:0.85rem; color:#d97706; font-weight:600;">⏳ Awaiting Donor</span>
+                                <span style="font-size:0.75rem; color:#64748b;">(Scheduled for ${item.scheduled_date})</span>
+                            </div>
+                        `;
+                    }
+                } else if (item.status === 'donated') {
+                    actionHtml = `
+                        <div class="text-center" style="color:#16a34a; font-weight:600;">✓ Completed</div>
+                    `;
+                } else {
+                    actionHtml = '<span style="color:#64748b;">Process Completed</span>';
+                }
+
+                html += `
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:1rem 0.5rem;">${item.patient_name}</td>
+                        <td style="padding:1rem 0.5rem;">${item.blood_request_group}</td>
+                        <td style="padding:1rem 0.5rem;">${item.donor_name} (${item.donor_blood_group})</td>
+                        <td style="padding:1rem 0.5rem;"><span class="status-badge ${statusClass}">${item.status}</span></td>
+                        <td style="padding:1rem 0.5rem;">${item.scheduled_date || '<span class="text-muted">Not set</span>'}</td>
+                        <td style="padding:1rem 0.5rem;">${actionHtml}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("donorsContainer").innerHTML = '<div class="empty-state">Error loading donors.</div>';
+        });
 }
 
-function rejectAllocation(type, id) {
-    var box = document.getElementById(type + "ReasonBox" + id);
-    if (box) box.classList.add("show");
-}
+function acknowledgeDonor(responseId) {
+    var dateVal = document.getElementById("date-" + responseId).value;
+    if (!dateVal) {
+        alert("Please select a donation date.");
+        return;
+    }
 
-function submitRejection(type, id) {
-    var reason = document.getElementById(type + "Reason" + id).value;
-    if (!reason) { alert("Please enter a reason."); return; }
-    
-    // Store rejection reason (in real app, this would be sent to backend)
-    alert("Rejection submitted successfully!\n\nReason: " + reason + "\n\nThis rejection will be visible in admin-requests.html with 'Rejected' status.");
-
-    // Hide reason box
-    var box = document.getElementById(type + "ReasonBox" + id);
-    if (box) box.classList.remove("show");
-
-    // Update action buttons
-    var row = document.getElementById(type + "Row" + id);
-    if (row) {
-        row.style.opacity = "0.4";
-        var actionCell = row.querySelector('td:last-child');
-        if (actionCell) {
-            actionCell.innerHTML = '<span style="color:#ef4444; font-weight:600; font-size:0.85rem;">✗ Rejected</span>';
+    fetch(API_BASE + "/hospital/acknowledge-donor/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            response_id: responseId,
+            scheduled_date: dateVal
+        })
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Failed to schedule.");
+            return;
         }
-    }
+        alert("Donor acknowledged and donation scheduled!");
+        loadAcceptedDonors();
+    });
 }
+
+function completeDonation(responseId) {
+    // This function is replaced by modal flow
+    openCompletionModal(responseId);
+}
+
+let currentResponseId = null;
+let currentRequestId = null;
+let currentPatientName = null;
+let selectedOutcomeType = null;
+
+function openCompletionModal(responseId, requestId, patientName) {
+    currentResponseId = responseId;
+    currentRequestId = requestId;
+    currentPatientName = patientName;
+    selectedOutcomeType = null;
+    document.getElementById('completionModal').style.display = 'flex';
+    document.getElementById('confirmFinalizeBtn').disabled = true;
+    document.getElementById('otpSection').style.display = 'none';
+    var otpInput = document.getElementById('hospitalAuthOtp');
+    otpInput.value = '';
+    otpInput.disabled = true;
+    otpInput.placeholder = "Click Send OTP first";
+    
+    // Reset options UI
+    const options = document.querySelectorAll('.modal-option');
+    options.forEach(opt => opt.classList.remove('selected'));
+}
+
+function closeModal() {
+    document.getElementById('completionModal').style.display = 'none';
+}
+
+function selectOutcome(type) {
+    selectedOutcomeType = type;
+    const options = document.querySelectorAll('.modal-option');
+    options.forEach(opt => {
+        opt.classList.remove('selected');
+        if (opt.getAttribute('onclick').includes(type)) {
+            opt.classList.add('selected');
+        }
+    });
+    
+    // Show OTP section after selecting an outcome
+    document.getElementById('otpSection').style.display = 'block';
+    document.getElementById('confirmFinalizeBtn').disabled = false;
+}
+
+function sendModalOtp() {
+    var email = localStorage.getItem("userEmail");
+    if (!email) { alert("Hospital email not found. Please re-login."); return; }
+
+    var btn = document.getElementById("sendModalOtpBtn");
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    fetch("http://127.0.0.1:8000/api/auth/request-email-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            email: email, 
+            user_type: "hospital",
+            action: "finalize_donation",
+            patient_name: currentPatientName,
+            outcome_type: selectedOutcomeType
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            alert("OTP sent to your registered email.");
+            var otpInput = document.getElementById("hospitalAuthOtp");
+            otpInput.disabled = false;
+            otpInput.placeholder = "Enter 6-digit OTP";
+            otpInput.focus();
+            btn.textContent = "Resend OTP";
+        } else {
+            alert(data.message || "Failed to send OTP.");
+            btn.textContent = "Retry";
+        }
+    })
+    .catch(() => { alert("Error sending OTP."); btn.textContent = "Retry"; })
+    .finally(() => { btn.disabled = false; });
+}
+
+function executeFinalize() {
+    var otp = document.getElementById("hospitalAuthOtp").value.trim();
+    if (!otp) { alert("Please enter the authorization OTP."); return; }
+
+    var email = localStorage.getItem("userEmail");
+    
+    // First verify the OTP
+    fetch("http://127.0.0.1:8000/api/auth/verify-email-otp/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, otp: otp })
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Invalid OTP.");
+            return;
+        }
+        
+        // If OTP is valid, proceed with the selected outcome
+        if (selectedOutcomeType === 'TRANSFER') {
+            finalizeTransfer();
+        } else if (selectedOutcomeType === 'RETURN') {
+            finalizeReturn();
+        }
+    })
+    .catch(() => alert("Authorization error."));
+}
+
+function finalizeTransfer() {
+    const btn = document.getElementById('confirmFinalizeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    fetch(API_BASE + "/complete-donation/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            response_id: currentResponseId
+        })
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Failed to complete donation.");
+            btn.disabled = false;
+            btn.textContent = 'Confirm Outcome';
+            return;
+        }
+        alert("Donation successfully transferred to patient!");
+        closeModal();
+        loadAcceptedDonors();
+    })
+    .catch(err => {
+        alert("Error completing donation.");
+        btn.disabled = false;
+        btn.textContent = 'Confirm Outcome';
+    });
+}
+
+function finalizeReturn() {
+    const btn = document.getElementById('confirmFinalizeBtn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    // First complete the donation to record that it happened
+    fetch(API_BASE + "/complete-donation/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            response_id: currentResponseId
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        // Then immediately return it to inventory
+        return fetch(API_BASE + "/hospital/return-inventory/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                request_id: currentRequestId
+            })
+        });
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data: data })))
+    .then(res => {
+        if (!res.ok) {
+            alert(res.data.message || "Failed to return to inventory.");
+            btn.disabled = false;
+            btn.textContent = 'Confirm Outcome';
+            return;
+        }
+        alert("Donation recorded and units returned to inventory!");
+        closeModal();
+        loadAcceptedDonors();
+    })
+    .catch(err => {
+        alert("Error processing return.");
+        btn.disabled = false;
+        btn.textContent = 'Confirm Outcome';
+    });
+}
+
+if (localStorage.getItem("userRole") !== "receiver") {
+    alert("Unauthorized access!");
+    window.location.href = "login.html";
+}
+
+loadAcceptedDonors();
 </script>
 
 </body>

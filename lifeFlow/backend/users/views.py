@@ -96,6 +96,117 @@ def register_hospital(request):
 
 
 @csrf_exempt
+def get_donor_profile(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Only GET method is allowed'}, status=405)
+
+    donor_id = request.GET.get('donor_id')
+    donor_mobile = request.GET.get('donor_mobile')
+
+    donor = None
+    if donor_id:
+        donor = Donor.objects.filter(id=donor_id).first()
+    elif donor_mobile:
+        donor = Donor.objects.filter(mobile_number=donor_mobile).first()
+
+    if not donor:
+        return JsonResponse({'status': 'error', 'message': 'Donor not found'}, status=404)
+
+    return JsonResponse({
+        'status': 'success',
+        'data': {
+            'id': donor.id,
+            'first_name': donor.first_name,
+            'last_name': donor.last_name,
+            'mobile_number': donor.mobile_number,
+            'blood_group': donor.blood_group,
+            'city': donor.city,
+            'state': donor.state,
+            'address_line': donor.address_line,
+            'pincode': donor.pincode,
+            'gender': donor.gender,
+            'date_of_birth': donor.date_of_birth,
+            'is_available': donor.is_available,
+            'status': donor.status,
+            'status_reason': donor.status_reason
+        }
+    })
+
+
+@csrf_exempt
+def update_donor_status(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method is allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        donor_id = data.get('donor_id')
+        new_status = data.get('status')
+        reason = data.get('reason', "")
+
+        if not donor_id or not new_status:
+            return JsonResponse({'status': 'error', 'message': 'donor_id and status are required'}, status=400)
+
+        donor = Donor.objects.filter(id=donor_id).first()
+        if not donor:
+            return JsonResponse({'status': 'error', 'message': 'Donor not found'}, status=404)
+
+        # Update status
+        donor.status = new_status
+        donor.status_reason = reason
+        
+        # Keep is_available and is_active synced for safety
+        if new_status == 'active':
+            donor.is_available = True
+            donor.is_active = True
+        else:
+            donor.is_available = False
+            # Only set is_active to False if it's 'inactive'
+            if new_status == 'inactive':
+                donor.is_active = False
+            else:
+                donor.is_active = True
+
+        donor.save()
+        return JsonResponse({'status': 'success', 'message': 'Status updated successfully', 'new_status': donor.status})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
+def update_donor_profile(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Only POST method is allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        donor_id = data.get('donor_id')
+        if not donor_id:
+            return JsonResponse({'status': 'error', 'message': 'donor_id is required'}, status=400)
+
+        donor = Donor.objects.filter(id=donor_id).first()
+        if not donor:
+            return JsonResponse({'status': 'error', 'message': 'Donor not found'}, status=404)
+
+        # Update only allowed fields (excluding name and blood group as per user request)
+        if 'city' in data: donor.city = data['city']
+        if 'state' in data: donor.state = data['state']
+        if 'address_line' in data: donor.address_line = data['address_line']
+        if 'pincode' in data: donor.pincode = data['pincode']
+
+        donor.save()
+        return JsonResponse({'status': 'success', 'message': 'Profile updated successfully'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@csrf_exempt
 def register_admin(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Only POST method is allowed'}, status=405)

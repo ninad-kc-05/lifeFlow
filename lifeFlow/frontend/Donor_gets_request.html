@@ -276,20 +276,22 @@ function loadActiveRequest() {
 
             var actionHtml = '';
             var statusInfo = '';
+            var normalizedStatus = String(req.status || '').toLowerCase();
+            var isDecisionPending = ['pending', 'testing', 'selected'].includes(normalizedStatus);
 
-            if (req.status === 'pending') {
+            if (isDecisionPending) {
                 actionHtml = `
                     <div class="actions">
                         <button class="btn btn-success btn-large" onclick="respondToRequest(${req.request_id}, 'ACCEPTED')">Accept Request</button>
                         <button class="btn btn-secondary btn-large" onclick="respondToRequest(${req.request_id}, 'DECLINED')">Decline</button>
                     </div>
                 `;
-            } else if (req.status === 'accepted' || req.status === 'donor_accepted') {
+            } else if (normalizedStatus === 'accepted' || normalizedStatus === 'donor_accepted') {
                 statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; color: #475569;">
                     <strong>Status:</strong> Request Accepted. Waiting for the hospital to schedule a donation date.
                 </div>`;
-                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #64748b; font-weight: 600;">✓ Request Accepted</div>`;
-            } else if (req.status === 'scheduled') {
+                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #64748b; font-weight: 600;">Accepted</div>`;
+            } else if (normalizedStatus === 'scheduled') {
                 statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; color: #92400e;">
                     <strong>Action Required:</strong> The hospital has scheduled your donation for <strong>${req.scheduled_date}</strong>. Please confirm if you can make it.
                 </div>`;
@@ -299,13 +301,12 @@ function loadActiveRequest() {
                         <button class="btn btn-secondary btn-large" onclick="respondToRequest(${req.request_id}, 'DECLINED')">Decline</button>
                     </div>
                 `;
-            } else if (req.status === 'schedule_accepted') {
+            } else if (normalizedStatus === 'schedule_accepted') {
                 statusInfo = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 8px; color: #166534;">
                     <strong>Schedule Confirmed:</strong> You are scheduled to donate on <strong>${req.scheduled_date}</strong>. See you there!
                 </div>`;
-                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #16a34a; font-weight: 600;">✓ Schedule Confirmed</div>`;
+                actionHtml = `<div class="text-center" style="margin-top: 1rem; color: #16a34a; font-weight: 600;">Schedule Confirmed</div>`;
             }
-
             container.innerHTML = `
                 ${statusInfo}
                 <div class="request-card">
@@ -464,4 +465,3 @@ loadActiveRequest();
 
 </body>
 </html>
-

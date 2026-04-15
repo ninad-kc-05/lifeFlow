@@ -199,17 +199,18 @@ def match_donors(request_id):
     for donor in donors:
         # Debugging donor matching
         print(f"[DEBUG] Matching donor {donor.id} ({donor.blood_group}) in {donor.city}/{donor.pincode}")
+
+        # First gate: blood/component compatibility.
+        if not is_compatible(donor.blood_group, blood_request.blood_group, blood_request.component_type):
+            print(f"[DEBUG] Donor {donor.id} failed compatibility check")
+            continue
         
         same_pincode = str(donor.pincode or "").strip() == str(blood_request.pincode or "").strip()
         same_city = str(donor.city or "").strip().lower() == str(blood_request.city or "").strip().lower()
 
-        # Location filter is mandatory: first same pincode, otherwise same city.
+        # Second gate: location filter (same pincode first, else same city).
         if not same_pincode and not same_city:
             print(f"[DEBUG] Donor {donor.id} failed location check")
-            continue
-
-        if not is_compatible(donor.blood_group, blood_request.blood_group, blood_request.component_type):
-            print(f"[DEBUG] Donor {donor.id} failed compatibility check")
             continue
 
         eligible, reason = is_eligible(donor)
@@ -239,10 +240,12 @@ def match_donors(request_id):
             }
         )
 
+    # Rank by total score first (blood compatibility contributes the largest share),
+    # then prefer pincode over city when scores tie.
     matches.sort(
         key=lambda row: (
-            1 if row["location_priority"] == "pincode" else 0,
             row["score"],
+            1 if row["location_priority"] == "pincode" else 0,
             -row["donor"].id,
         ),
         reverse=True,

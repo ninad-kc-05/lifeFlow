@@ -452,8 +452,8 @@ class AdminRequestDonorsView(APIView):
 
         data.sort(
             key=lambda row: (
-                2 if row.get("location_match") == "PINCODE" else (1 if row.get("location_match") == "CITY" else 0),
                 float(row.get("score") or 0),
+                2 if row.get("location_match") == "PINCODE" else (1 if row.get("location_match") == "CITY" else 0),
             ),
             reverse=True,
         )

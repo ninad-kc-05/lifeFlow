@@ -127,19 +127,14 @@
 <div id="completionModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Finalize Donation Process</h3>
+            <h3 id="modalTitle">Finalize Donation Process</h3>
         </div>
         <div class="modal-body">
-            <p class="text-muted mb-lg">The donor has visited and donated. Please select the outcome for the patient:</p>
-            
-            <div class="modal-option" onclick="selectOutcome('TRANSFER')">
-                <h4>✅ Successfully Transferred</h4>
-                <p>The blood units have been successfully transfused to the patient.</p>
-            </div>
-            
-            <div class="modal-option" onclick="selectOutcome('RETURN')">
-                <h4>🔄 Return to Inventory</h4>
-                <p>The patient recovered or no longer needs the units. Return to main inventory.</p>
+            <p class="text-muted mb-lg" id="modalOutcomeText">Select what happened after donation:</p>
+
+            <div class="action-container" style="margin-bottom: 1rem;">
+                <button class="btn btn-success btn-sm" id="modalTransferBtn" onclick="selectOutcome('TRANSFER')">Successfully Transferred</button>
+                <button class="btn btn-secondary btn-sm" id="modalReturnBtn" onclick="startReturnFlow()">Return to Inventory</button>
             </div>
 
             <div id="otpSection" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; display:none;">
@@ -296,7 +291,7 @@ function acknowledgeDonor(responseId) {
 
 function completeDonation(responseId) {
     // This function is replaced by modal flow
-    openCompletionModal(responseId);
+    openCompletionModal(responseId, null, "");
 }
 
 let currentResponseId = null;
@@ -312,14 +307,15 @@ function openCompletionModal(responseId, requestId, patientName) {
     document.getElementById('completionModal').style.display = 'flex';
     document.getElementById('confirmFinalizeBtn').disabled = true;
     document.getElementById('otpSection').style.display = 'none';
+    document.getElementById('modalTitle').textContent = 'Finalize Donation Process';
+    document.getElementById('modalOutcomeText').textContent = 'Select what happened after donation:';
+    document.getElementById('confirmFinalizeBtn').textContent = 'Confirm Outcome';
+    document.getElementById('modalTransferBtn').className = 'btn btn-success btn-sm';
+    document.getElementById('modalReturnBtn').className = 'btn btn-secondary btn-sm';
     var otpInput = document.getElementById('hospitalAuthOtp');
     otpInput.value = '';
     otpInput.disabled = true;
     otpInput.placeholder = "Click Send OTP first";
-    
-    // Reset options UI
-    const options = document.querySelectorAll('.modal-option');
-    options.forEach(opt => opt.classList.remove('selected'));
 }
 
 function closeModal() {
@@ -328,17 +324,27 @@ function closeModal() {
 
 function selectOutcome(type) {
     selectedOutcomeType = type;
-    const options = document.querySelectorAll('.modal-option');
-    options.forEach(opt => {
-        opt.classList.remove('selected');
-        if (opt.getAttribute('onclick').includes(type)) {
-            opt.classList.add('selected');
-        }
-    });
-    
-    // Show OTP section after selecting an outcome
     document.getElementById('otpSection').style.display = 'block';
     document.getElementById('confirmFinalizeBtn').disabled = false;
+
+    if (type === 'RETURN') {
+        document.getElementById('modalTitle').textContent = 'Return Units to Inventory';
+        document.getElementById('modalOutcomeText').textContent = 'Use this only when units were not transfused to the patient.';
+        document.getElementById('confirmFinalizeBtn').textContent = 'Confirm Return';
+        document.getElementById('modalTransferBtn').className = 'btn btn-secondary btn-sm';
+        document.getElementById('modalReturnBtn').className = 'btn btn-success btn-sm';
+    } else {
+        document.getElementById('modalTitle').textContent = 'Confirm Donation Completion';
+        document.getElementById('modalOutcomeText').textContent = 'This marks donation as transferred to patient and does not add inventory.';
+        document.getElementById('confirmFinalizeBtn').textContent = 'Confirm Donation';
+        document.getElementById('modalTransferBtn').className = 'btn btn-success btn-sm';
+        document.getElementById('modalReturnBtn').className = 'btn btn-secondary btn-sm';
+    }
+}
+
+function startReturnFlow() {
+    selectOutcome('RETURN');
+    document.getElementById('confirmFinalizeBtn').focus();
 }
 
 function sendModalOtp() {
@@ -379,6 +385,8 @@ function sendModalOtp() {
 }
 
 function executeFinalize() {
+    if (!selectedOutcomeType) { alert("Please select an outcome first."); return; }
+
     var otp = document.getElementById("hospitalAuthOtp").value.trim();
     if (!otp) { alert("Please enter the authorization OTP."); return; }
 

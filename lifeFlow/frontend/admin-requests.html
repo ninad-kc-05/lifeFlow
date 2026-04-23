@@ -121,12 +121,17 @@
       return "pending";
     }
 
+    function resolveUrgency(item) {
+      var raw = item && (item.urgency || item.urgency_level) || "normal";
+      return String(raw).toLowerCase();
+    }
+
     function renderRequests(items) {
       var tbody = document.getElementById("requestsBody");
       
       // Filter by urgency based on tab
       var filtered = items.filter(function(item) {
-        var urgency = String(item.urgency_level || "normal").toLowerCase();
+        var urgency = resolveUrgency(item);
         if (currentTab === 'normal') {
           return urgency === 'normal';
         } else {
@@ -141,21 +146,26 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No ' + currentTab + ' requests found.</td></tr>';
+        var emptyLabel = currentTab === 'urgent' ? 'urgent/emergency' : 'normal';
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:2rem; text-align:center; color:#64748b;">No ' + emptyLabel + ' requests found.</td></tr>';
         return;
       }
 
       tbody.innerHTML = filtered.map(function(item) {
         var statusText = String(item.status || "PENDING");
-        var urgency = String(item.urgency_level || "normal").toLowerCase();
+        var urgency = resolveUrgency(item);
         var badge = '<span class="status-badge ' + badgeClass(statusText) + '">' + statusText + '</span>';
         var urgencyBadge = '<span class="urgency-badge urgency-' + urgency + '">' + urgency + '</span>';
 
+        var isUrgentFlow = urgency === 'urgent' || urgency === 'emergency';
+
         var action = '-';
-        if (statusText === "PENDING") {
+        if (isUrgentFlow && (statusText === "PENDING" || statusText === "DONOR_NEEDED" || statusText === "APPROVED")) {
+          action = '<button class="btn btn-primary btn-sm" style="background:#dc2626; border:none;" onclick="allotInventory(' + item.id + ')">Emergency Allot</button>';
+        } else if (statusText === "PENDING") {
           action = '<button class="btn btn-primary btn-sm" onclick="markAsRead(' + item.id + ')">Mark as Read</button>';
         } else if (statusText === "DONOR_NEEDED") {
-          if (urgency === 'normal') {
+          if (!isUrgentFlow) {
             action = '<button class="btn btn-primary btn-sm" onclick="searchDonor(' + item.id + ')">Assign Donor</button>';
           } else {
             // Urgent/Emergency: Direct allot from inventory
